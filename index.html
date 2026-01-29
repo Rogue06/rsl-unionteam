@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNION TEAM - Manager</title>
+    <style>
+        :root {
+            --bg-editor: #1e1f22;
+            --bg-preview: #313338;
+            --text-main: #dbdee1;
+            --text-muted: #949ba4;
+            --header-bg: #2b2d31;
+            --accent: #5865f2;
+            --success: #248046;
+            --warning: #f0b232;
+        }
+
+        body, html {
+            margin: 0; padding: 0; height: 100%;
+            font-family: "gg sans", sans-serif;
+            background-color: var(--bg-preview);
+            color: var(--text-main);
+            overflow: hidden;
+        }
+
+        header {
+            background-color: var(--header-bg);
+            height: 70px;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 25px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+        }
+
+        .container { display: flex; height: calc(100% - 70px); }
+
+        .editor {
+            flex: 1; background-color: var(--bg-editor);
+            padding: 20px; display: flex; flex-direction: column;
+            border-right: 1px solid #26272d;
+        }
+
+        textarea {
+            flex: 1; background: transparent; border: none; color: #dcddde;
+            font-family: 'Consolas', monospace; font-size: 14px; line-height: 1.5;
+            resize: none; outline: none; padding: 10px;
+        }
+
+        .preview { flex: 1; padding: 20px 40px; overflow-y: auto; }
+
+        .discord-message { font-size: 1rem; line-height: 1.375rem; white-space: pre-wrap; }
+        .discord-message strong { color: #ffffff; font-weight: 700; }
+        .discord-message hr { border: none; border-top: 1px solid #4e5058; margin: 16px 0; }
+
+        .btn-group { display: flex; gap: 10px; align-items: center; }
+        button {
+            padding: 10px 16px; border-radius: 3px; border: none;
+            font-weight: 600; cursor: pointer; color: white; transition: 0.2s;
+        }
+        .btn-blue { background-color: var(--accent); }
+        .btn-green { background-color: var(--success); }
+        .btn-outline { background-color: transparent; border: 1px solid var(--text-muted); color: var(--text-muted); }
+        
+        /* Style pointillé jaune pour la boîte de découpage */
+        .split-box {
+            display: none; /* Caché par défaut */
+            gap: 10px;
+            align-items: center;
+            border: 2px dashed var(--warning); /* Bordure jaune pointillée */
+            padding: 5px 15px;
+            border-radius: 5px;
+        }
+
+        /* Ton style pointillé fluo pour l'avertissement du collègue */
+        .warning-box {
+            display: none;
+            background: rgba(36, 128, 70, 0.1);
+            border: 2px dashed #3ba55c;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            color: #3ba55c;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        .counter { font-size: 12px; color: var(--text-muted); margin-top: 10px; text-align: right; }
+        .counter.limit { color: #da373c; font-weight: bold; }
+
+        #copy-toast {
+            position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%);
+            background: #43b581; color: white; padding: 12px 24px; border-radius: 5px; opacity: 0; transition: 0.4s;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div style="font-weight: bold; color: white; font-size: 1.2rem;">⚔️ UNION TEAM MANAGER</div>
+    <div class="btn-group">
+        <button class="btn-outline" onclick="resetToDefault()">Reset</button>
+        
+        <div id="standard-ui" class="btn-group">
+            <button class="btn-blue" onclick="copyPure()">Copier pour poster</button>
+            <button class="btn-green" onclick="copyForFriend(0)">📋 Partager au collègue</button>
+        </div>
+
+        <div id="split-ui" class="split-box">
+            <span style="font-size: 12px; color: var(--warning); font-weight: bold;">Annonce trop longue :</span>
+            <button class="btn-green" onclick="copyForFriend(1)">PARTIE 1</button>
+            <button class="btn-green" onclick="copyForFriend(2)">PARTIE 2</button>
+        </div>
+    </div>
+</header>
+
+<div class="container">
+    <div class="editor">
+        <div id="warning-msg" class="warning-box">
+            ⚠️ ATTENTION : Ton collègue devra copier le texte SANS les accents graves (```js) pour que l'annonce soit belle sur Discord !
+        </div>
+        <h2>Modification</h2>
+        <textarea id="rawText" oninput="renderPreview()"></textarea>
+        <div id="charCounter" class="counter">0 / 2000</div>
+    </div>
+    <div class="preview">
+        <h2>Aperçu Discord</h2>
+        <div id="visualPreview" class="discord-message"></div>
+    </div>
+</div>
+
+<div id="copy-toast">Copié !</div>
+
+<script>
+const emojiMap = { ":dart:":"🎯", ":fire:":"🔥", ":boom:":"💥", ":dragon:":"🐉", ":smiling_imp:":"😈", ":heavy_check_mark:":"✔️", ":pushpin:":"📌", ":crossed_swords:":"⚔️", ":third_place:":"🥉", ":punch:":"👊", ":gift:":"🎁", ":envelope_with_arrow:":"📩", ":muscle:":"💪" };
+
+const MASTER_AD = `:dart: **[FR] L’Alliance UNION TEAM Recrute !** :dart:
+Tu veux un clan actif, organisé, avec une vraie bonne ambiance, des strats solides et une progression garantie ?
+Notre Union possède **3 clans : Bronze → Silver → Gold**, ce qui te permet d’évoluer naturellement selon ton niveau et ton engagement.
+
+⸻
+
+:fire:** UNION TEAM GOLD (Top niveau)**
+
+:boom: BDC : UNM / NM / Brutal → tombent tous les jours
+:dragon: **Hydre** : Normal / Difficile / Brutal / Cauchemar → tout tombe
+:smiling_imp:** Chimère** : Difficile & Cauchemar & UNM tombent 
+
+:heavy_check_mark: **Exigences :**
+
+• Frapper **BDC UNM**
+• **150k RP / 80k NRP** en CvC
+• Quotas minimum Clash Hydre **650M** • Quotas minimum Clash Chimère **500M** • Activité Discord
+:dart:** Ambiance chill + performance + bienveillance**
+:pushpin: ** Place(s) disponible(s) **: à déterminer
+
+⸻
+
+:crossed_swords: **UNION TEAM SILVER (Intermédiaire)**
+
+:boom: **BDC** : UNM & NM → tombent tous les jours
+:dragon: **Hydre** : Normal / Difficile / Brutal
+:smiling_imp: **Chimère** : Facile & Difficile tombent
+
+:heavy_check_mark: **Exigences** :
+
+• Frapper** BDC UNM**
+• **100k RP / 50k NRP** en CvC
+• Quotas minimum Clash Hydre **50M** • Présence Discord
+:pushpin: ** Place(s) disponible(s) **: à déterminer
+
+⸻
+
+:fire:** UNION TEAM SAVAGE **
+
+:boom: **BDC** : UNM / NM → tombent tous les jours
+:dragon: **Hydre** : Normal / Difficile / Brutal / Cauchemar → tout tombe
+:smiling_imp:** Chimère** : Difficile & Cauchemar tombent & UNM en cours 
+
+:heavy_check_mark: **Exigences :**
+
+• Puissance mini : 2M
+• Frapper **BDC UNM & NM**
+• **80k RP / 50k NRP** en CvC
+• Quotas minimum Clash Hydre **80M** • Quotas minimum Clash Chimère **100M** • Activité Discord
+:dart:** Ambiance chill + performance + bienveillance**
+:pushpin: ** Place(s) disponible(s) **:  2 à 3 places dispo
+
+⸻
+
+:third_place:** UNION TEAM BRONZE (Progression)**
+
+:boom: **BDC** : UNM, NM & Brutal → tombent chaque jour
+:punch: **Objectif** : faire tomber l’UNM ensemble !
+:dragon: **Hydre** : Normal tombe
+
+:heavy_check_mark: **Exigences :**
+
+• Frapper **BDC UNM**
+• **40k RP / 20k NRP** en CvC
+• Motivation pour monter vers **Silver**, puis **Gold**
+:pushpin: **2 places dispo !**
+
+⸻
+
+:gift: **Pourquoi nous rejoindre ?**
+
+:heavy_check_mark: Une** communauté soudée**, mature et engagée
+:heavy_check_mark: Des **strats partagées** en permanence
+:heavy_check_mark: Un **Discord actif** : guides, coaching, aide, fun
+:heavy_check_mark: Une vraie progression **de Bronze jusqu’à Gold**
+
+⸻
+
+:envelope_with_arrow:** Intéressé(e) ?**
+MP direct pour candidater ou poser tes questions.
+On a hâte de t’accueillir dans l’Union Team :muscle:`;
+
+const textarea = document.getElementById('rawText');
+const preview = document.getElementById('visualPreview');
+const counter = document.getElementById('charCounter');
+const standardUI = document.getElementById('standard-ui');
+const splitUI = document.getElementById('split-ui');
+const warnMsg = document.getElementById('warning-msg');
+
+function renderPreview() {
+    let content = textarea.value;
+    localStorage.setItem('union_persist_final', content);
+    
+    const len = content.length;
+    counter.innerText = `${len} / 2000`;
+    counter.className = len > 2000 ? 'counter limit' : 'counter';
+
+    if(len > 2000) {
+        standardUI.style.display = 'none';
+        splitUI.style.display = 'flex'; // Affiche la boîte pointillée
+    } else {
+        standardUI.style.display = 'flex';
+        splitUI.style.display = 'none';
+    }
+
+    let formatted = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/⸻/g, '<hr>');
+    for (const [code, icon] of Object.entries(emojiMap)) { formatted = formatted.split(code).join(icon); }
+    preview.innerHTML = formatted;
+}
+
+function copyPure() {
+    navigator.clipboard.writeText(textarea.value);
+    warnMsg.style.display = 'none';
+    showToast("Annonce prête à poster !");
+}
+
+function copyForFriend(mode) {
+    const content = textarea.value;
+    let textToCopy = "";
+    warnMsg.style.display = 'block';
+
+    if (mode === 0) {
+        textToCopy = "```js\n" + content + "\n```";
+    } else {
+        const sep = "⸻";
+        const parts = content.split(sep);
+        const mid = Math.ceil(parts.length / 2);
+        if (mode === 1) {
+            textToCopy = "```js\n" + parts.slice(0, mid).join(sep) + "⸻\n```";
+        } else {
+            textToCopy = "```js\n" + sep + parts.slice(mid).join(sep) + "\n```";
+        }
+    }
+
+    navigator.clipboard.writeText(textToCopy);
+    showToast(mode === 0 ? "Code collègue copié !" : "Partie " + mode + " copiée !");
+}
+
+function resetToDefault() {
+    if(confirm("Réinitialiser l'annonce originale ?")) {
+        textarea.value = MASTER_AD;
+        renderPreview();
+        warnMsg.style.display = 'none';
+    }
+}
+
+function showToast(m) {
+    const t = document.getElementById('copy-toast');
+    t.innerText = m; t.style.opacity = '1';
+    setTimeout(() => t.style.opacity = '0', 2000);
+}
+
+window.onload = () => {
+    textarea.value = localStorage.getItem('union_persist_final') || MASTER_AD;
+    renderPreview();
+};
+</script>
+</body>
+</html>
