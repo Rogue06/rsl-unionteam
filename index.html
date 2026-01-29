@@ -3,284 +3,343 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UNION TEAM - Dashboard Officier</title>
+    <title>UNION TEAM - Dashboard Officier Elite</title>
     <style>
         :root {
             --bg-darker: #1e1f22; --bg-main: #2b2d31; --bg-preview: #313338;
             --text-white: #ffffff; --text-main: #dbdee1; --text-muted: #949ba4;
-            --accent-discord: #5865f2; --success-green: #248046; --warning-orange: #f0b232; --danger: #f23f43;
+            --accent: #5865f2; --success: #248046; --warning: #f0b232; --danger: #f23f43;
+            --glass: rgba(255, 255, 255, 0.05);
         }
 
-        body, html { margin: 0; padding: 0; height: 100%; font-family: "gg sans", sans-serif; background-color: var(--bg-main); color: var(--text-main); overflow: hidden; }
-        header { background-color: var(--bg-darker); height: 70px; display: flex; align-items: center; justify-content: space-between; padding: 0 25px; border-bottom: 2px solid #1a1b1e; }
+        body, html { margin: 0; padding: 0; height: 100%; font-family: "gg sans", "Inter", sans-serif; background-color: var(--bg-main); color: var(--text-main); overflow: hidden; }
         
+        header { 
+            background-color: var(--bg-darker); height: 70px; display: flex; align-items: center; justify-content: space-between; 
+            padding: 0 25px; border-bottom: 2px solid #1a1b1e; z-index: 100;
+        }
+
+        .brand-group { display: flex; align-items: center; gap: 20px; }
+        .logo-text { font-weight: 800; color: white; font-size: 1.1rem; letter-spacing: 0.5px; }
+
+        .quick-note-nav {
+            display: flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 20px;
+            background: var(--glass); border: 1px solid rgba(255,255,255,0.08); color: var(--text-muted);
+            font-size: 11px; font-weight: 700; cursor: pointer; transition: 0.3s;
+        }
+        .quick-note-nav:hover { background: rgba(88, 101, 242, 0.15); color: white; border-color: var(--accent); }
+
         .container { display: flex; height: calc(100% - 70px); }
-        .editor-zone { flex: 1.1; background-color: var(--bg-darker); padding: 20px; overflow-y: auto; border-right: 1px solid #1a1b1e; }
-        .preview-zone { flex: 0.9; background-color: var(--bg-preview); padding: 25px; overflow-y: auto; scroll-behavior: smooth; position: relative; }
+        .editor-zone { flex: 1.1; background-color: var(--bg-darker); padding: 25px; overflow-y: auto; border-right: 1px solid #1a1b1e; scroll-behavior: smooth; }
+        .preview-zone { flex: 0.9; background-color: var(--bg-preview); padding: 25px; overflow-y: auto; position: relative; scroll-behavior: smooth; }
 
-        /* Style des blocs (Cards) */
-        .module-card { background: #2b2d31; border-radius: 8px; padding: 18px; margin-bottom: 25px; border: 1px solid #3f4147; transition: 0.2s; }
-        .module-card h3 { margin: 0 0 15px 0; font-size: 13px; color: var(--warning-orange); text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; }
-        
-        /* Bloc Note Spécifique */
-        .notes-area { width: 100%; background: #1e1f22; border: 1px solid #1a1b1e; border-radius: 4px; color: #dbdee1; padding: 10px; font-family: inherit; font-size: 13px; resize: vertical; min-height: 100px; outline: none; box-sizing: border-box; }
-        .notes-area:focus { border-color: var(--success-green); }
+        .module-card { background: #2b2d31; border-radius: 8px; padding: 20px; margin-bottom: 25px; border: 1px solid #3f4147; transition: 0.3s; }
+        .module-card h3 { margin: 0 0 15px 0; font-size: 13px; color: var(--warning); text-transform: uppercase; letter-spacing: 1px; }
 
+        /* BLOC NOTES */
+        .notes-container { 
+            background: #111214; border: 1px solid #1a1b1e; border-radius: 8px; 
+            display: flex; flex-direction: column; width: 100%; box-sizing: border-box;
+            max-height: 500px;
+        }
+        .notes-toolbar { 
+            background: #1e1f22; padding: 10px; border-bottom: 1px solid #1a1b1e; 
+            display: flex; gap: 8px; align-items: center; flex-wrap: wrap; position: sticky; top: 0; z-index: 5;
+        }
+        .toolbar-btn {
+            background: #2b2d31; border: 1px solid #3f4147; color: white; padding: 5px 10px; 
+            border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 700; transition: 0.2s;
+        }
+        .toolbar-btn:hover { background: #4e5058; }
+
+        #userNotes { 
+            width: 100%; height: 350px; padding: 15px; color: #dbdee1; 
+            font-size: 14px; outline: none; overflow-y: auto; box-sizing: border-box;
+            background: transparent; line-height: 1.5;
+        }
+        #userNotes img { 
+            max-width: 150px; max-height: 150px; border-radius: 4px; margin: 10px 0; 
+            border: 2px solid transparent; cursor: zoom-in; transition: 0.2s;
+        }
+        #userNotes img:hover { border-color: var(--accent); transform: scale(1.02); }
+
+        /* LIGHTBOX (Visionneuse) */
+        #lightbox {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none;
+            justify-content: center; align-items: center; z-index: 9999; cursor: zoom-out;
+            animation: fadeIn 0.2s ease;
+        }
+        #lightbox img { max-width: 90%; max-height: 90%; border-radius: 8px; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* INPUTS */
         .grid-inputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
         .field { display: flex; flex-direction: column; gap: 5px; }
         label { font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; }
-        
-        input { background: #1e1f22; border: 1px solid #1a1b1e; border-radius: 4px; padding: 8px; color: white; font-size: 13px; outline: none; }
-        input:focus { border-color: var(--accent-discord); background: #232428; }
+        input { background: #111214; border: 1px solid #1a1b1e; border-radius: 4px; padding: 10px; color: white; font-size: 13px; outline: none; }
+        input::placeholder { color: #4e5058; font-style: italic; }
+        .hl-active { background-color: rgba(240, 178, 50, 0.8) !important; color: black !important; font-weight: bold; border-radius: 3px; }
 
-        .hl-active { background-color: rgba(240, 178, 50, 0.8) !important; color: black !important; font-weight: bold; border-radius: 3px; padding: 0 2px; }
-
-        .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
-        button { padding: 8px 14px; border-radius: 4px; border: none; font-weight: 600; cursor: pointer; font-size: 11px; display: flex; align-items: center; gap: 6px; transition: 0.2s; }
-        .btn-blue { background-color: var(--accent-discord); color: white; }
-        .btn-green { background-color: var(--success-green); color: white; }
+        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; }
+        button { padding: 9px 16px; border-radius: 6px; border: none; font-weight: 600; cursor: pointer; font-size: 12px; }
+        .btn-blue { background-color: var(--accent); color: white; }
+        .btn-green { background-color: var(--success); color: white; }
         .btn-gray { background: #4f545c; color: white; }
-        .btn-outline { background: transparent; border: 1px solid var(--text-muted); color: var(--text-muted); }
-        .btn-split { background: #eb459e; color: white; }
-
-        .char-counter { position: sticky; top: -25px; background: var(--bg-preview); padding: 10px; font-weight: bold; border-bottom: 1px solid #4e5058; margin-bottom: 15px; z-index: 10; display: flex; justify-content: space-between; align-items: center; }
-        .limit-ok { color: var(--success-green); }
-        .limit-bad { color: var(--danger); }
 
         .discord-mockup { font-size: 15px; line-height: 1.5; white-space: pre-wrap; color: #dbdee1; padding-bottom: 100px; }
         .discord-mockup strong { color: #fff; }
         .discord-mockup hr { border: none; border-top: 1px solid #4e5058; margin: 25px 0; }
-
-        #copy-toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: var(--success-green); color: white; padding: 12px 25px; border-radius: 8px; opacity: 0; transition: 0.4s; z-index: 9999; pointer-events: none; font-weight: bold; }
-        #expertMode { display: none; width: 100%; height: 80%; background: #232428; color: #dcddde; font-family: monospace; padding: 15px; border-radius: 8px; resize: none; border: 1px solid #1a1b1e; }
+        .scroll-anchor { scroll-margin-top: 60px; display: block; height: 0; width: 0; }
         
-        #helpModal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 9000; }
-        .modal-content { background: var(--bg-main); padding: 30px; border-radius: 12px; max-width: 500px; border: 1px solid #4e5058; }
-
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-thumb { background: #1a1b1e; border-radius: 10px; }
+        #copy-toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: var(--success); color: white; padding: 12px 25px; border-radius: 30px; opacity: 0; transition: 0.4s; z-index: 9999; pointer-events: none; }
+        .pulse-active { animation: pulse-note 1.5s ease-out; border-color: var(--accent) !important; }
+        @keyframes pulse-note { 0% { box-shadow: 0 0 0 0 rgba(88, 101, 242, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(88, 101, 242, 0); } }
     </style>
 </head>
 <body>
 
 <header>
-    <div style="font-weight: 800; color: white; font-size: 1.1rem;">🛡️ UNION TEAM <span style="font-weight: 400; color: var(--text-muted);">OFFICER TOOLS</span></div>
+    <div class="brand-group">
+        <div class="logo-text">🛡️ UNION TEAM</div>
+        <div class="quick-note-nav" onclick="scrollToNotes()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+            NOTES
+        </div>
+    </div>
     <div class="btn-group">
-        <button class="btn-outline" onclick="toggleHelp()">❓ Aide</button>
-        <button class="btn-gray" onclick="confirmReset()">🔄 Reset Form</button>
-        <div style="width: 2px; height: 30px; background: #4e5058; margin: 0 5px;"></div>
-        <button class="btn-blue" id="btn-copy-full" onclick="copyAction('pure')">🚀 Copier Annonce</button>
-        <button class="btn-green" id="btn-share-full" onclick="copyAction('friend')">👥 Partager Code</button>
-        <button class="btn-split" id="btn-p1" style="display:none" onclick="copySplit(1)">✂️ Copier P1</button>
-        <button class="btn-split" id="btn-p2" style="display:none" onclick="copySplit(2)">✂️ Copier P2</button>
+        <button class="btn-gray" onclick="confirmReset()">🔄 Reset Champs</button>
+        <button class="btn-blue" onclick="copyAction('pure')">🚀 Copier Tout</button>
+        <button class="btn-green" onclick="copyAction('friend')">👥 Code Discord</button>
     </div>
 </header>
 
 <div class="container">
     <div class="editor-zone">
         
-        <div id="recruitmentModule">
-            <button id="toggleBtn" style="background:#4f545c; color:white; width:100%; padding:10px; margin-bottom:20px; border:1px dashed #949ba4; cursor:pointer; border-radius:4px; font-weight: bold;" onclick="toggleMode()">⚙️ Passer en Mode Texte Libre</button>
-            
-            <div id="formMode">
-                <div class="module-card" onfocusin="syncFocus('preview_gold')">
-                    <h3>🔥 UNION TEAM GOLD</h3>
-                    <div class="grid-inputs">
-                        <div class="field"><label>BDC</label><input type="text" id="g_bdc" data-base="UNM / NM / Brutal"></div>
-                        <div class="field"><label>Hydre</label><input type="text" id="g_hy" data-base="Normal / Difficile / Brutal / Cauchemar"></div>
-                        <div class="field"><label>Chimère</label><input type="text" id="g_ch" data-base="Difficile / Cauchemar / UNM"></div>
-                        <div class="field"><label>CvC (RP/NRP)</label><input type="text" id="g_cvc" data-base="150k RP / 80k NRP"></div>
-                        <div class="field"><label>Clash Hydre</label><input type="text" id="g_chy" data-base="650M"></div>
-                        <div class="field"><label>Clash Chimère</label><input type="text" id="g_cch" data-base="500M"></div>
-                        <div class="field"><label>Places</label><input type="text" id="g_pl" data-base="à déterminer"></div>
-                    </div>
-                </div>
-
-                <div class="module-card" onfocusin="syncFocus('preview_silver')">
-                    <h3>⚔️ UNION TEAM SILVER</h3>
-                    <div class="grid-inputs">
-                        <div class="field"><label>BDC</label><input type="text" id="s_bdc" data-base="UNM / NM"></div>
-                        <div class="field"><label>Hydre</label><input type="text" id="s_hy" data-base="Normal / Difficile / Brutal"></div>
-                        <div class="field"><label>Chimère</label><input type="text" id="s_ch" data-base="Facile / Difficile"></div>
-                        <div class="field"><label>CvC (RP/NRP)</label><input type="text" id="s_cvc" data-base="100k RP / 50k NRP"></div>
-                        <div class="field"><label>Clash Hydre</label><input type="text" id="s_chy" data-base="50M"></div>
-                        <div class="field"><label>Clash Chimère</label><input type="text" id="s_cch" data-base=""></div>
-                        <div class="field"><label>Places</label><input type="text" id="s_pl" data-base="à déterminer"></div>
-                    </div>
-                </div>
-
-                <div class="module-card" onfocusin="syncFocus('preview_savage')">
-                    <h3>🔥 UNION TEAM SAVAGE</h3>
-                    <div class="grid-inputs">
-                        <div class="field"><label>BDC</label><input type="text" id="sv_bdc" data-base="UNM / NM"></div>
-                        <div class="field"><label>Hydre</label><input type="text" id="sv_hy" data-base="Normal / Difficile / Brutal / Cauchemar"></div>
-                        <div class="field"><label>Chimère</label><input type="text" id="sv_ch" data-base="Difficile / Cauchemar"></div>
-                        <div class="field"><label>CvC (RP/NRP)</label><input type="text" id="sv_cvc" data-base="80k RP / 50k NRP"></div>
-                        <div class="field"><label>Clash Hydre</label><input type="text" id="sv_chy" data-base="80M"></div>
-                        <div class="field"><label>Clash Chimère</label><input type="text" id="sv_cch" data-base="100M"></div>
-                        <div class="field"><label>Places</label><input type="text" id="sv_pl" data-base="2 à 3 places"></div>
-                    </div>
-                </div>
-
-                <div class="module-card" onfocusin="syncFocus('preview_bronze')">
-                    <h3>🥉 UNION TEAM BRONZE</h3>
-                    <div class="grid-inputs">
-                        <div class="field"><label>BDC</label><input type="text" id="b_bdc" data-base="UNM / NM / Brutal"></div>
-                        <div class="field"><label>Hydre</label><input type="text" id="b_hy" data-base="Normal"></div>
-                        <div class="field"><label>Chimère</label><input type="text" id="b_ch" data-base=""></div>
-                        <div class="field"><label>CvC (RP/NRP)</label><input type="text" id="b_cvc" data-base="40k RP / 20k NRP"></div>
-                        <div class="field"><label>Clash Hydre</label><input type="text" id="b_chy" data-base=""></div>
-                        <div class="field"><label>Clash Chimère</label><input type="text" id="b_cch" data-base=""></div>
-                        <div class="field"><label>Places</label><input type="text" id="b_pl" data-base="2 places dispo !"></div>
-                    </div>
+        <div id="formMode">
+            <div class="module-card" onfocusin="syncFocus('preview_gold')">
+                <h3>🔥 UNION TEAM GOLD</h3>
+                <div class="grid-inputs">
+                    <div class="field"><label>BDC</label><input type="text" id="g_bdc" placeholder="UNM / NM / Brutal"></div>
+                    <div class="field"><label>Hydre</label><input type="text" id="g_hy" placeholder="Normal / Brutal / Cauchemar"></div>
+                    <div class="field"><label>Chimère</label><input type="text" id="g_ch" placeholder="Difficile / Cauchemar / UNM"></div>
+                    <div class="field"><label>CvC (RP/NRP)</label><input type="text" id="g_cvc" placeholder="150k RP / 80k NRP"></div>
+                    <div class="field"><label>Clash Hydre</label><input type="text" id="g_chy" placeholder="650M"></div>
+                    <div class="field"><label>Clash Chimère</label><input type="text" id="g_cch" placeholder="500M"></div>
+                    <div class="field"><label>Places</label><input type="text" id="g_pl" placeholder="à déterminer"></div>
                 </div>
             </div>
-            <textarea id="expertMode" spellcheck="false" oninput="renderPreview()"></textarea>
+
+            <div class="module-card" onfocusin="syncFocus('preview_silver')">
+                <h3>⚔️ UNION TEAM SILVER</h3>
+                <div class="grid-inputs">
+                    <div class="field"><label>BDC</label><input type="text" id="s_bdc" placeholder="UNM & NM"></div>
+                    <div class="field"><label>Hydre</label><input type="text" id="s_hy" placeholder="Normal / Brutal"></div>
+                    <div class="field"><label>Chimère</label><input type="text" id="s_ch" placeholder="Facile & Difficile"></div>
+                    <div class="field"><label>CvC (RP/NRP)</label><input type="text" id="s_cvc" placeholder="100k RP / 50k NRP"></div>
+                    <div class="field"><label>Clash Hydre</label><input type="text" id="s_chy" placeholder="50M"></div>
+                    <div class="field"><label>Places</label><input type="text" id="s_pl" placeholder="à déterminer"></div>
+                </div>
+            </div>
+
+            <div class="module-card" onfocusin="syncFocus('preview_savage')">
+                <h3>🔥 UNION TEAM SAVAGE</h3>
+                <div class="grid-inputs">
+                    <div class="field"><label>BDC</label><input type="text" id="sv_bdc" placeholder="UNM / NM"></div>
+                    <div class="field"><label>Hydre</label><input type="text" id="sv_hy" placeholder="Tout tombe"></div>
+                    <div class="field"><label>Chimère</label><input type="text" id="sv_ch" placeholder="Difficile & Cauchemar"></div>
+                    <div class="field"><label>CvC (RP/NRP)</label><input type="text" id="sv_cvc" placeholder="80k RP / 50k NRP"></div>
+                    <div class="field"><label>Clash Hydre</label><input type="text" id="sv_chy" placeholder="80M"></div>
+                    <div class="field"><label>Clash Chimère</label><input type="text" id="sv_cch" placeholder="100M"></div>
+                    <div class="field"><label>Places</label><input type="text" id="sv_pl" placeholder="2 à 3 places dispo"></div>
+                </div>
+            </div>
+
+            <div class="module-card" onfocusin="syncFocus('preview_bronze')">
+                <h3>🥉 UNION TEAM BRONZE</h3>
+                <div class="grid-inputs">
+                    <div class="field"><label>BDC</label><input type="text" id="b_bdc" placeholder="UNM, NM & Brutal"></div>
+                    <div class="field"><label>Hydre</label><input type="text" id="b_hy" placeholder="Normal"></div>
+                    <div class="field"><label>CvC (RP/NRP)</label><input type="text" id="b_cvc" placeholder="40k RP / 20k NRP"></div>
+                    <div class="field"><label>Places</label><input type="text" id="b_pl" placeholder="2 places dispo !"></div>
+                </div>
+            </div>
         </div>
 
         <div class="module-card" id="notesModule">
-            <h3>📓 NOTES PERSONNELLES (Local)</h3>
-            <textarea id="userNotes" class="notes-area" placeholder="Notes de candidatures, rappels, objectifs..." oninput="saveNotes()"></textarea>
-            <p style="font-size: 10px; color: var(--text-muted); margin-top: 5px;">* Ces notes sont enregistrées uniquement sur votre navigateur.</p>
+            <h3>📓 BLOC-NOTES OFFICIER</h3>
+            <div class="notes-container">
+                <div class="notes-toolbar">
+                    <button class="toolbar-btn" onclick="execCmd('bold')">B</button>
+                    <button class="toolbar-btn" onclick="execCmd('italic')">I</button>
+                    <button class="toolbar-btn" onclick="toggleHighlight()">Highlight</button>
+                    <button class="toolbar-btn" onclick="document.getElementById('imgInput').click()">🖼️ Image</button>
+                    <input type="file" id="imgInput" style="display:none" accept="image/*" onchange="insertImage(this)">
+                </div>
+                <div id="userNotes" contenteditable="true" oninput="saveNotes()"></div>
+            </div>
         </div>
-
     </div>
 
     <div class="preview-zone">
-        <div class="char-counter">
-            <span>Taille Annonce : <span id="charCount">0</span> / 2000</span>
-            <span id="limitStatus"></span>
-        </div>
         <div id="visualPreview" class="discord-mockup"></div>
+        <textarea id="expertMode" style="display:none"></textarea>
     </div>
 </div>
 
-<div id="helpModal">
-    <div class="modal-content">
-        <h2 style="color:white; margin-top:0;">📖 Guide Officier</h2>
-        <p>• <b>Annonce</b> : Modifiez les cases, l'aperçu se met à jour.</p>
-        <p>• <b>Note Perso</b> : Le bloc en bas à gauche est votre espace privé (non partagé).</p>
-        <p>• <b>Sauvegarde</b> : Tout est mémorisé sur ce PC automatiquement.</p>
-        <button class="btn-blue" onclick="toggleHelp()" style="width:100%; justify-content:center; margin-top:10px;">Compris !</button>
-    </div>
+<div id="lightbox" onclick="this.style.display='none'">
+    <img src="" id="lightboxImg">
 </div>
 
 <div id="copy-toast">Copié !</div>
 
 <script>
-let currentMode = "form";
 let activeFieldId = null;
 
-const clanConfig = [
-    { id: 'g', name: 'GOLD', emoji: ':fire:' },
-    { id: 's', name: 'SILVER', emoji: ':crossed_swords:' },
-    { id: 'sv', name: 'SAVAGE', emoji: ':fire:' },
-    { id: 'b', name: 'BRONZE', emoji: ':third_place:' }
-];
+function scrollToNotes() {
+    const el = document.getElementById('notesModule');
+    el.scrollIntoView({ behavior: 'smooth' });
+    el.classList.remove('pulse-active');
+    void el.offsetWidth;
+    el.classList.add('pulse-active');
+}
 
-// --- GESTION ANNONCE ---
+function syncFocus(id) {
+    const target = document.getElementById(id);
+    if(target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function execCmd(cmd, val = null) {
+    document.execCommand(cmd, false, val);
+    saveNotes();
+}
+
+function toggleHighlight() {
+    const selection = window.getSelection();
+    if (!selection.rangeCount) return;
+    
+    // Si la couleur de fond est déjà jaune, on l'enlève
+    const parent = selection.anchorNode.parentElement;
+    if (parent.style.backgroundColor === 'rgb(240, 178, 50)') {
+        document.execCommand('hiliteColor', false, 'transparent');
+    } else {
+        document.execCommand('hiliteColor', false, '#f0b232');
+    }
+    saveNotes();
+}
+
+function insertImage(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = `<img src="${e.target.result}" onclick="openLightbox(this.src)">`;
+            document.execCommand('insertHTML', false, img);
+            saveNotes();
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function openLightbox(src) {
+    const lb = document.getElementById('lightbox');
+    const img = document.getElementById('lightboxImg');
+    img.src = src;
+    lb.style.display = 'flex';
+}
+
+function saveNotes() { 
+    localStorage.setItem('unionTeam_richNotes', document.getElementById('userNotes').innerHTML); 
+}
+
 function build() {
-    if(currentMode !== "form") return;
     const raw = generateContent(false);
     document.getElementById('expertMode').value = raw;
-    const len = raw.replace("%%%SPLIT%%%", "").length;
-    document.getElementById('charCount').innerText = len;
-    
-    if(len > 2000) {
-        document.getElementById('charCount').className = 'limit-bad';
-        document.getElementById('limitStatus').innerHTML = "⚠️ Scinder l'envoi";
-        document.getElementById('btn-p1').style.display = 'flex';
-        document.getElementById('btn-p2').style.display = 'flex';
-    } else {
-        document.getElementById('charCount').className = 'limit-ok';
-        document.getElementById('limitStatus').innerHTML = "✅ Ok Discord";
-        document.getElementById('btn-p1').style.display = 'none';
-        document.getElementById('btn-p2').style.display = 'none';
-    }
     renderPreview(generateContent(true));
     saveData();
 }
 
 function generateContent(isHtml) {
-    let t = `:dart: **[FR] L’Alliance UNION TEAM Recrute !** :dart:\nNotre Union possède **3 clans : Bronze → Silver → Gold**.\n\n`;
-    clanConfig.forEach((c, idx) => {
-        const f = {
-            bdc: getVal(c.id+'_bdc', isHtml), hy: getVal(c.id+'_hy', isHtml), ch: getVal(c.id+'_ch', isHtml),
-            cvc: getVal(c.id+'_cvc', isHtml), chy: getVal(c.id+'_chy', isHtml), cch: getVal(c.id+'_cch', isHtml), pl: getVal(c.id+'_pl', isHtml)
-        };
-        if(idx === 2) t += "%%%SPLIT%%%";
-        t += `⸻\n\n${c.emoji}** UNION TEAM ${c.name} **\n`;
-        if(f.bdc) t += `:boom: BDC : ${f.bdc} → tombent tous les jours\n`;
-        if(f.hy)  t += `:dragon: **Hydre** : ${f.hy}\n`;
-        if(f.ch)  t += `:smiling_imp: **Chimère** : ${f.ch} tombent\n`;
-        t += `\n:heavy_check_mark: **Exigences :**\n`;
-        if(c.id !== 'b') t += `• Frapper **BDC UNM**\n`;
-        if(f.cvc) t += `• **${f.cvc}** en CvC\n`;
-        if(f.chy) t += `• Quotas Clash Hydre **${f.chy}**\n`;
-        if(f.cch) t += `• Quotas Clash Chimère **${f.cch}**\n`;
-        t += (c.id === 'b') ? `• Motivation Evolution\n` : `• Activité Discord\n`;
-        if(f.pl)  t += `:pushpin: ** Places **: ${f.pl}\n\n`;
+    let t = `:dart: **[FR] L’Alliance UNION TEAM Recrute !** :dart:\n`;
+    t += `Tu veux un clan actif, organisé, avec une vraie bonne ambiance, des strats solides et une progression garantie ?\n`;
+    t += `Notre Union possède **3 clans : Bronze → Silver → Gold**, ce qui te permet d’évoluer naturellement selon ton niveau et ton engagement.\n\n`;
+
+    const sections = [
+        {id:'g', name:'GOLD (Top niveau)', emoji:':fire:', hy:true, ch:true, chy:true, cch:true, power:false},
+        {id:'s', name:'SILVER (Intermédiaire)', emoji:':crossed_swords:', hy:true, ch:true, chy:true, cch:false, power:false},
+        {id:'sv', name:'SAVAGE', emoji:':fire:', hy:true, ch:true, chy:true, cch:true, power:true},
+        {id:'b', name:'BRONZE (Progression)', emoji:':third_place:', hy:true, ch:false, chy:false, cch:false, power:false}
+    ];
+
+    sections.forEach(s => {
+        if(isHtml) t += `<span id="preview_${s.id === 'g' ? 'gold' : s.id === 's' ? 'silver' : s.id === 'sv' ? 'savage' : 'bronze'}" class="scroll-anchor"></span>`;
+        t += `⸻\n\n${s.emoji}** UNION TEAM ${s.name} **\n\n`;
+        t += `:boom: BDC : ${getVal(s.id+'_bdc', isHtml)} → tombent tous les jours\n`;
+        if(s.hy) t += `:dragon: **Hydre** : ${getVal(s.id+'_hy', isHtml)} ${s.id === 'b' ? 'tombe' : '→ tout tombe'}\n`;
+        if(s.ch) t += `:smiling_imp:** Chimère** : ${getVal(s.id+'_ch', isHtml)} tombent \n`;
+        if(s.id === 'b') t += `:punch: **Objectif** : faire tomber l’UNM ensemble !\n`;
+        
+        t += `\n:heavy_check_mark: **Exigences :**\n\n`;
+        if(s.power) t += `• Puissance mini : 2M\n`;
+        t += `• Frapper **BDC UNM**${s.id === 'sv' ? ' & NM' : ''}\n`;
+        if(getVal(s.id+'_cvc', false)) t += `• **${getVal(s.id+'_cvc', isHtml)}** en CvC\n`;
+        if(s.chy && getVal(s.id+'_chy', false)) t += `• Quotas minimum Clash Hydre **${getVal(s.id+'_chy', isHtml)}** \n`;
+        if(s.cch && getVal(s.id+'_cch', false)) t += `• Quotas minimum Clash Chimère **${getVal(s.id+'_cch', isHtml)}** \n`;
+        
+        if(s.id === 'b') t += `• Motivation pour monter vers **Silver**, puis **Gold**\n`;
+        else t += `• ${s.id === 's' ? 'Présence' : 'Activité'} Discord\n`;
+        
+        if(s.id === 'g' || s.id === 'sv') t += `:dart:** Ambiance chill + performance + bienveillance**\n`;
+        t += `:pushpin: ** Place(s) disponible(s) **: ${getVal(s.id+'_pl', isHtml)}\n\n`;
     });
-    t += `⸻\n:envelope_with_arrow: **MP pour postuler !** :muscle:`;
-    return isHtml ? t.replace("%%%SPLIT%%%", "") : t;
+
+    t += `⸻\n\n:gift: **Pourquoi nous rejoindre ?**\n\n`;
+    t += `:heavy_check_mark: Une** communauté soudée**, mature et engagée\n`;
+    t += `:heavy_check_mark: Des **strats partagées** en permanence\n`;
+    t += `:heavy_check_mark: Un **Discord actif** : guides, coaching, aide, fun\n`;
+    t += `:heavy_check_mark: Une vraie progression **de Bronze jusqu’à Gold**\n\n`;
+    t += `⸻\n\n:envelope_with_arrow:** Intéressé(e) ?**\nMP direct pour candidater ou poser tes questions.\nOn a hâte de t’accueillir dans l’Union Team :muscle:`;
+    return isHtml ? t : t;
 }
 
 function getVal(id, isHtml) {
     const el = document.getElementById(id);
-    if(!el) return null;
-    const val = el.value.trim();
-    if(!val) return null;
-    return (isHtml && id === activeFieldId) ? `<span class="hl-active">${val}</span>` : val;
+    const val = el ? el.value.trim() : "";
+    const finalVal = val || (el ? el.placeholder : "");
+    return (isHtml && id === activeFieldId) ? `<span class="hl-active">${finalVal}</span>` : finalVal;
 }
 
-// --- GESTION NOTES ---
-function saveNotes() {
-    const noteText = document.getElementById('userNotes').value;
-    localStorage.setItem('unionTeam_notes', noteText);
-}
-
-// --- UI & STOCKAGE ---
-function saveData() {
-    const allVals = {};
-    document.querySelectorAll('input').forEach(i => allVals[i.id] = i.value);
-    localStorage.setItem('unionTeam_save', JSON.stringify(allVals));
-}
-
-function copyAction(type) {
-    let text = document.getElementById('expertMode').value.replace("%%%SPLIT%%%", "");
-    if(type === 'friend') text = "```js\n" + text + "\n```";
-    navigator.clipboard.writeText(text);
-    showToast("Copié !");
-}
-
-function copySplit(part) {
-    const parts = document.getElementById('expertMode').value.split("%%%SPLIT%%%");
-    let textToCopy = (part === 1) ? parts[0] : "*(Suite)*\n" + parts[1];
-    navigator.clipboard.writeText(textToCopy);
-    showToast(`Partie ${part} copiée !`);
-}
-
-function renderPreview(rawText = null) {
-    let content = rawText || document.getElementById('expertMode').value.replace("%%%SPLIT%%%", "");
+function renderPreview(content) {
     const emojiMap = { ":dart:":"🎯", ":fire:":"🔥", ":boom:":"💥", ":dragon:":"🐉", ":smiling_imp:":"😈", ":heavy_check_mark:":"✔️", ":pushpin:":"📌", ":crossed_swords:":"⚔️", ":third_place:":"🥉", ":punch:":"👊", ":gift:":"🎁", ":envelope_with_arrow:":"📩", ":muscle:":"💪" };
     let html = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/⸻/g, '<hr>');
     for (const [code, icon] of Object.entries(emojiMap)) { html = html.split(code).join(icon); }
     document.getElementById('visualPreview').innerHTML = html;
 }
 
-function confirmReset() { if(confirm("Réinitialiser le formulaire d'annonce ?")) applyDefaults(); }
-function applyDefaults() { document.querySelectorAll('input').forEach(i => i.value = i.getAttribute('data-base') || ""); build(); }
-function toggleMode() {
-    const f = document.getElementById('formMode'), e = document.getElementById('expertMode'), b = document.getElementById('toggleBtn');
-    if(currentMode === "form") { f.style.display = "none"; e.style.display = "block"; b.innerText = "📝 Formulaire"; currentMode = "expert"; }
-    else { f.style.display = "block"; e.style.display = "none"; b.innerText = "⚙️ Mode Texte"; currentMode = "form"; build(); }
+function saveData() {
+    const vals = {};
+    document.querySelectorAll('input[type="text"]').forEach(i => vals[i.id] = i.value);
+    localStorage.setItem('unionTeam_save', JSON.stringify(vals));
 }
 
-function showToast(m) { const t = document.getElementById('copy-toast'); t.innerText = m; t.style.opacity = '1'; setTimeout(() => t.style.opacity = '0', 2000); }
-function toggleHelp() { const m = document.getElementById('helpModal'); m.style.display = (m.style.display === 'flex') ? 'none' : 'flex'; }
-function syncFocus(id) { document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+function copyAction(type) {
+    let text = document.getElementById('expertMode').value;
+    if(type === 'friend') text = "```js\n" + text + "\n```";
+    navigator.clipboard.writeText(text);
+    showToast("Copié !");
+}
 
-// --- INITIALISATION ---
+function showToast(m) { 
+    const t = document.getElementById('copy-toast'); t.innerText = m; t.style.opacity = '1'; 
+    setTimeout(() => t.style.opacity = '0', 2000); 
+}
+
+function confirmReset() { 
+    if(confirm("Vider tous les champs ?")) {
+        document.querySelectorAll('input[type="text"]').forEach(i => i.value = "");
+        build();
+    }
+}
+
 document.querySelectorAll('input').forEach(input => {
     input.addEventListener('input', (e) => { activeFieldId = e.target.id; build(); });
     input.addEventListener('focus', (e) => { activeFieldId = e.target.id; build(); });
@@ -288,17 +347,20 @@ document.querySelectorAll('input').forEach(input => {
 });
 
 window.onload = () => {
-    // Load Recrutement
     const saved = localStorage.getItem('unionTeam_save');
     if (saved) {
         const data = JSON.parse(saved);
         for (const id in data) { if(document.getElementById(id)) document.getElementById(id).value = data[id]; }
-        build();
-    } else { applyDefaults(); }
-    
-    // Load Notes
-    const savedNotes = localStorage.getItem('unionTeam_notes');
-    if(savedNotes) { document.getElementById('userNotes').value = savedNotes; }
+    }
+    const savedNotes = localStorage.getItem('unionTeam_richNotes');
+    if(savedNotes) {
+        document.getElementById('userNotes').innerHTML = savedNotes;
+        // Réattribuer l'événement clic aux images chargées depuis la mémoire
+        document.querySelectorAll('#userNotes img').forEach(img => {
+            img.onclick = () => openLightbox(img.src);
+        });
+    }
+    build();
 };
 </script>
 </body>
