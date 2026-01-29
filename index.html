@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UNION TEAM - Dashboard Officiel</title>
+    <title>UNION TEAM - Dashboard Sécurisé</title>
     <style>
         :root {
             --bg-darker: #1e1f22; --bg-main: #2b2d31; --bg-preview: #313338;
             --text-white: #ffffff; --text-main: #dbdee1; --text-muted: #949ba4;
-            --accent-discord: #5865f2; --success-green: #248046; --warning-orange: #f0b232;
+            --accent-discord: #5865f2; --success-green: #248046; --warning-orange: #f0b232; --danger: #f23f43;
         }
 
         body, html { margin: 0; padding: 0; height: 100%; font-family: "gg sans", sans-serif; background-color: var(--bg-main); color: var(--text-main); overflow: hidden; }
@@ -16,9 +16,9 @@
         
         .container { display: flex; height: calc(100% - 70px); }
         .editor-zone { flex: 1.1; background-color: var(--bg-darker); padding: 20px; overflow-y: auto; border-right: 1px solid #1a1b1e; }
-        .preview-zone { flex: 0.9; background-color: var(--bg-preview); padding: 25px; overflow-y: auto; scroll-behavior: smooth; }
+        .preview-zone { flex: 0.9; background-color: var(--bg-preview); padding: 25px; overflow-y: auto; scroll-behavior: smooth; position: relative; }
 
-        .clan-card { background: #2b2d31; border-radius: 8px; padding: 18px; margin-bottom: 20px; border: 1px solid #3f4147; transition: 0.3s; }
+        .clan-card { background: #2b2d31; border-radius: 8px; padding: 18px; margin-bottom: 20px; border: 1px solid #3f4147; }
         .clan-card h3 { margin: 0 0 15px 0; font-size: 13px; color: var(--warning-orange); text-transform: uppercase; }
         
         .grid-inputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
@@ -26,45 +26,53 @@
         label { font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; }
         
         input { background: #1e1f22; border: 1px solid #1a1b1e; border-radius: 4px; padding: 8px; color: white; font-size: 13px; outline: none; }
-        input:focus { border-color: var(--accent-discord); background: #232428; }
+        input:focus { border-color: var(--accent-discord); }
 
         .hl-active { background-color: rgba(240, 178, 50, 0.8) !important; color: black !important; font-weight: bold; border-radius: 3px; padding: 0 2px; }
 
-        .btn-group { display: flex; gap: 8px; }
-        button { padding: 8px 14px; border-radius: 4px; border: none; font-weight: 600; cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 6px; transition: 0.2s; }
+        .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+        button { padding: 8px 14px; border-radius: 4px; border: none; font-weight: 600; cursor: pointer; font-size: 11px; display: flex; align-items: center; gap: 6px; transition: 0.2s; }
         .btn-blue { background-color: var(--accent-discord); color: white; }
         .btn-green { background-color: var(--success-green); color: white; }
         .btn-gray { background: #4f545c; color: white; }
         .btn-outline { background: transparent; border: 1px solid var(--text-muted); color: var(--text-muted); }
-        .btn-toggle { background: #4f545c; color: white; width: 100%; justify-content: center; margin-bottom: 20px; border: 1px dashed #949ba4; }
+        .btn-split { background: #eb459e; color: white; }
 
-        .discord-mockup { font-size: 15px; line-height: 1.5; white-space: pre-wrap; color: #dbdee1; }
+        .char-counter { position: sticky; top: -25px; background: var(--bg-preview); padding: 10px; font-weight: bold; border-bottom: 1px solid #4e5058; margin-bottom: 15px; z-index: 10; display: flex; justify-content: space-between; }
+        .limit-ok { color: var(--success-green); }
+        .limit-bad { color: var(--danger); }
+
+        .discord-mockup { font-size: 15px; line-height: 1.5; white-space: pre-wrap; color: #dbdee1; padding-bottom: 100px; }
         .discord-mockup strong { color: #fff; }
         .discord-mockup hr { border: none; border-top: 1px solid #4e5058; margin: 25px 0; }
 
-        #copy-toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: var(--success-green); color: white; padding: 12px 25px; border-radius: 8px; opacity: 0; transition: 0.4s; font-weight: bold; z-index: 2000; pointer-events: none; }
+        #copy-toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: var(--success-green); color: white; padding: 12px 25px; border-radius: 8px; opacity: 0; transition: 0.4s; z-index: 5000; pointer-events: none; }
         #expertMode { display: none; width: 100%; height: 85%; background: #232428; color: #dcddde; font-family: monospace; padding: 15px; border-radius: 8px; resize: none; border: 1px solid #1a1b1e; }
-
-        #helpModal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 3000; }
-        .modal-content { background: var(--bg-main); padding: 30px; border-radius: 12px; max-width: 500px; color: var(--text-main); }
+        
+        #helpModal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 6000; }
+        .modal-content { background: var(--bg-main); padding: 30px; border-radius: 12px; max-width: 500px; }
     </style>
 </head>
 <body>
 
 <header>
-    <div style="font-weight: 800; color: white;">🛡️ UNION TEAM MANAGER</div>
+    <div style="font-weight: 800; color: white;">🛡️ UNION TEAM</div>
     <div class="btn-group">
         <button class="btn-outline" onclick="toggleHelp()">❓ Aide</button>
         <button class="btn-gray" onclick="confirmReset()">🔄 Reset</button>
-        <div style="width: 2px; height: 30px; background: #4e5058; margin: 0 10px;"></div>
-        <button class="btn-blue" onclick="copyAction('pure')">🚀 Poster l'annonce</button>
-        <button class="btn-green" onclick="copyAction('friend')">👥 Partager</button>
+        <div style="width: 2px; height: 30px; background: #4e5058; margin: 0 5px;"></div>
+        
+        <button class="btn-blue" id="btn-copy-full" onclick="copyAction('pure')">🚀 Copier Tout</button>
+        <button class="btn-green" id="btn-share-full" onclick="copyAction('friend')">👥 Partager Tout</button>
+        
+        <button class="btn-split" id="btn-p1" style="display:none" onclick="copySplit(1)">✂️ Copier P1 (Gold/Silver)</button>
+        <button class="btn-split" id="btn-p2" style="display:none" onclick="copySplit(2)">✂️ Copier P2 (Savage/Bronze)</button>
     </div>
 </header>
 
 <div class="container">
     <div class="editor-zone">
-        <button id="toggleBtn" class="btn-toggle" onclick="toggleMode()">⚙️ Passer en Mode Texte Libre (Expert)</button>
+        <button id="toggleBtn" class="btn-toggle" style="background:#4f545c; color:white; width:100%; padding:10px; margin-bottom:20px; border:1px dashed #949ba4; cursor:pointer;" onclick="toggleMode()">⚙️ Mode Texte Libre</button>
         
         <div id="formMode">
             <div class="clan-card" onfocusin="syncFocus('preview_gold')">
@@ -122,129 +130,145 @@
         <textarea id="expertMode"></textarea>
     </div>
 
-    <div class="preview-zone" id="previewArea">
+    <div class="preview-zone">
+        <div class="char-counter">
+            <span>Taille : <span id="charCount">0</span> / 2000</span>
+            <span id="limitStatus"></span>
+        </div>
         <div id="visualPreview" class="discord-mockup"></div>
     </div>
 </div>
 
 <div id="helpModal">
     <div class="modal-content">
-        <h2>📖 Guide Officier</h2>
-        <p>• <b>Champs Libres</b> : Modifiez les chiffres ou textes à gauche.</p>
-        <p>• <b>Auto-suppression</b> : Si une case est vide, la ligne n'apparaît pas à droite.</p>
-        <p>• <b>Reset</b> : Utilise les valeurs par défaut de l'Union Team.</p>
-        <p>• <b>Copier</b> : Cliquez sur Poster pour récupérer l'annonce prête pour Discord.</p>
-        <button class="btn-blue" onclick="toggleHelp()" style="width:100%; justify-content:center">Fermer</button>
+        <h2>ℹ️ Gestion des 2000 caractères</h2>
+        <p>Discord limite les messages à <b>2000 caractères</b> (hors Nitro).</p>
+        <p>• <b>Compteur Vert</b> : Tout va bien, utilisez le bouton bleu ou vert.</p>
+        <p>• <b>Compteur Rouge</b> : Le message est trop long. L'outil fera apparaître deux boutons roses pour poster l'annonce en 2 messages séparés.</p>
+        <button class="btn-blue" onclick="toggleHelp()" style="width:100%; justify-content:center">OK</button>
     </div>
 </div>
 
-<div id="copy-toast">Copié dans le presse-papier !</div>
+<div id="copy-toast">Copié !</div>
 
 <script>
 let currentMode = "form";
 let activeFieldId = null;
 
-const clanData = [
-    { id: 'g', name: 'GOLD', emoji: ':fire:' },
-    { id: 's', name: 'SILVER', emoji: ':crossed_swords:' },
-    { id: 'sv', name: 'SAVAGE', emoji: ':fire:' },
-    { id: 'b', name: 'BRONZE', emoji: ':third_place:' }
-];
-
 function build() {
     if(currentMode !== "form") return;
+    const raw = generateContent(false);
+    document.getElementById('expertMode').value = raw;
     
-    let fullText = `:dart: **[FR] L’Alliance UNION TEAM Recrute !** :dart:\nTu veux un clan actif, organisé, avec une vraie bonne ambiance, des strats solides et une progression garantie ?\nNotre Union possède **3 clans : Bronze → Silver → Gold**, ce qui te permet d’évoluer naturellement selon ton niveau et ton engagement.\n\n`;
+    // Check limit
+    const len = raw.length;
+    const countEl = document.getElementById('charCount');
+    const statusEl = document.getElementById('limitStatus');
+    countEl.innerText = len;
+    
+    if(len > 2000) {
+        countEl.className = 'limit-bad';
+        statusEl.innerHTML = "⚠️ Trop long pour Nitro !";
+        document.getElementById('btn-p1').style.display = 'flex';
+        document.getElementById('btn-p2').style.display = 'flex';
+    } else {
+        countEl.className = 'limit-ok';
+        statusEl.innerHTML = "✅ Ok pour Discord";
+        document.getElementById('btn-p1').style.display = 'none';
+        document.getElementById('btn-p2').style.display = 'none';
+    }
 
-    clanData.forEach(c => {
-        const fields = {
-            bdc: getVal(c.id+'_bdc'),
-            hy: getVal(c.id+'_hy'),
-            ch: getVal(c.id+'_ch'),
-            cvc: getVal(c.id+'_cvc'),
-            chy: getVal(c.id+'_chy'),
-            cch: getVal(c.id+'_cch'),
-            pl: getVal(c.id+'_pl')
-        };
+    renderPreview(generateContent(true));
+}
 
-        fullText += `⸻\n\n${c.emoji}** UNION TEAM ${c.name} **\n\n`;
-        if(fields.bdc) fullText += `:boom: BDC : ${fields.bdc} → tombent tous les jours\n`;
-        if(fields.hy)  fullText += `:dragon: **Hydre** : ${fields.hy}\n`;
-        if(fields.ch)  fullText += `:smiling_imp: **Chimère** : ${fields.ch} tombent\n`;
-        
-        fullText += `\n:heavy_check_mark: **Exigences :**\n`;
-        if(c.name !== 'BRONZE') fullText += `• Frapper **BDC UNM**\n`;
-        if(fields.cvc) fullText += `• **${fields.cvc}** en CvC\n`;
-        if(fields.chy) fullText += `• Quotas minimum Clash Hydre **${fields.chy}**\n`;
-        if(fields.cch) fullText += `• Quotas minimum Clash Chimère **${fields.cch}**\n`;
-        
-        fullText += c.name === 'BRONZE' ? `• Motivation pour monter vers **Silver**, puis **Gold**\n` : `• Activité Discord\n:dart:** Ambiance chill + performance + bienveillance**\n`;
-        if(fields.pl)  fullText += `:pushpin: ** Place(s) disponible(s) **: ${fields.pl}\n\n`;
+function generateContent(isHtml) {
+    const clans = [
+        { id: 'g', name: 'GOLD', emoji: ':fire:' },
+        { id: 's', name: 'SILVER', emoji: ':crossed_swords:' },
+        { id: 'sv', name: 'SAVAGE', emoji: ':fire:' },
+        { id: 'b', name: 'BRONZE', emoji: ':third_place:' }
+    ];
+
+    let t = `:dart: **[FR] L’Alliance UNION TEAM Recrute !** :dart:\nNotre Union possède **3 clans : Bronze → Silver → Gold**.\n\n`;
+
+    clans.forEach((c, idx) => {
+        const bdc = getVal(c.id+'_bdc', isHtml);
+        const hy = getVal(c.id+'_hy', isHtml);
+        const ch = getVal(c.id+'_ch', isHtml);
+        const cvc = getVal(c.id+'_cvc', isHtml);
+        const chy = getVal(c.id+'_chy', isHtml);
+        const cch = getVal(c.id+'_cch', isHtml);
+        const pl = getVal(c.id+'_pl', isHtml);
+
+        if(idx === 2) t += "%%%SPLIT%%%"; // Marqueur pour diviser en deux parties
+
+        t += `⸻\n\n${c.emoji}** UNION TEAM ${c.name} **\n`;
+        if(bdc) t += `:boom: BDC : ${bdc} → tombent tous les jours\n`;
+        if(hy)  t += `:dragon: **Hydre** : ${hy}\n`;
+        if(ch)  t += `:smiling_imp: **Chimère** : ${ch} tombent\n`;
+        t += `\n:heavy_check_mark: **Exigences :**\n`;
+        if(c.id !== 'b') t += `• Frapper **BDC UNM**\n`;
+        if(cvc) t += `• **${cvc}** en CvC\n`;
+        if(chy) t += `• Quotas Clash Hydre **${chy}**\n`;
+        if(cch) t += `• Quotas Clash Chimère **${cch}**\n`;
+        t += c.id === 'b' ? `• Motivation Evolution\n` : `• Activité Discord\n`;
+        if(pl)  t += `:pushpin: ** Places **: ${pl}\n\n`;
     });
 
-    fullText += `⸻\n\n:gift: **Pourquoi nous rejoindre ?**\n:heavy_check_mark: Une** communauté soudée**, mature et engagée\n:heavy_check_mark: Des **strats partagées** en permanence\n:heavy_check_mark: Un **Discord actif**\n:heavy_check_mark: Une vraie progression **de Bronze jusqu’à Gold**\n\n⸻\n\n:envelope_with_arrow:** Intéressé(e) ?**\nMP direct pour candidater.\nOn a hâte de t’accueillir dans l’Union Team :muscle:`;
-
-    document.getElementById('expertMode').value = fullText;
-    renderPreview();
+    t += `⸻\n:gift: **Pourquoi nous rejoindre ?**\n:heavy_check_mark: Communauté soudée\n:heavy_check_mark: Strats partagées\n:heavy_check_mark: Discord actif\n\n:envelope_with_arrow: **MP pour postuler !** :muscle:`;
+    return isHtml ? t.replace("%%%SPLIT%%%", "") : t;
 }
 
-function getVal(id) {
-    const el = document.getElementById(id);
-    if(!el) return null;
-    const val = el.value.trim();
+function getVal(id, isHtml) {
+    const val = document.getElementById(id).value.trim();
     if(!val) return null;
-    return id === activeFieldId ? `<span class="hl-active">${val}</span>` : val;
+    return (isHtml && id === activeFieldId) ? `<span class="hl-active">${val}</span>` : val;
 }
 
-function renderPreview() {
-    let content = document.getElementById('expertMode').value;
-    const emojiMap = { ":dart:":"🎯", ":fire:":"🔥", ":boom:":"💥", ":dragon:":"🐉", ":smiling_imp:":"😈", ":heavy_check_mark:":"✔️", ":pushpin:":"📌", ":crossed_swords:":"⚔️", ":third_place:":"🥉", ":punch:":"👊", ":gift:":"🎁", ":envelope_with_arrow:":"📩", ":muscle:":"💪" };
+function copySplit(part) {
+    const fullText = document.getElementById('expertMode').value;
+    const parts = fullText.split("%%%SPLIT%%%");
+    let textToCopy = (part === 1) ? parts[0] : parts[1];
     
-    let html = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/⸻/g, '<hr>');
-    html = html.replace("UNION TEAM GOLD", '<span id="preview_gold">UNION TEAM GOLD</span>');
-    html = html.replace("UNION TEAM SILVER", '<span id="preview_silver">UNION TEAM SILVER</span>');
-    html = html.replace("UNION TEAM SAVAGE", '<span id="preview_savage">UNION TEAM SAVAGE</span>');
-    html = html.replace("UNION TEAM BRONZE", '<span id="preview_bronze">UNION TEAM BRONZE</span>');
+    // On nettoie les tags et on ajoute un petit header pour la P2
+    if(part === 2) textToCopy = "*(Suite de l'annonce)*\n" + textToCopy;
+    
+    navigator.clipboard.writeText(textToCopy);
+    showToast(`Partie ${part} copiée !`);
+}
 
+function renderPreview(content) {
+    const emojiMap = { ":dart:":"🎯", ":fire:":"🔥", ":boom:":"💥", ":dragon:":"🐉", ":smiling_imp:":"😈", ":heavy_check_mark:":"✔️", ":pushpin:":"📌", ":crossed_swords:":"⚔️", ":third_place:":"🥉", ":punch:":"👊", ":gift:":"🎁", ":envelope_with_arrow:":"📩", ":muscle:":"💪" };
+    let html = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/⸻/g, '<hr>');
+    html = html.replace("UNION TEAM GOLD", '<span id="preview_gold">UNION TEAM GOLD</span>')
+               .replace("UNION TEAM SILVER", '<span id="preview_silver">UNION TEAM SILVER</span>')
+               .replace("UNION TEAM SAVAGE", '<span id="preview_savage">UNION TEAM SAVAGE</span>')
+               .replace("UNION TEAM BRONZE", '<span id="preview_bronze">UNION TEAM BRONZE</span>');
     for (const [code, icon] of Object.entries(emojiMap)) { html = html.split(code).join(icon); }
     document.getElementById('visualPreview').innerHTML = html;
 }
 
 function syncFocus(id) { document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
-
-function confirmReset() {
-    if(confirm("Réinitialiser tous les champs avec les valeurs par défaut ?")) {
-        applyDefaults();
-    }
-}
-
-function applyDefaults() {
-    document.querySelectorAll('input').forEach(i => {
-        i.value = i.getAttribute('data-base') || "";
-    });
-    build();
-}
+function confirmReset() { if(confirm("Réinitialiser ?")) { applyDefaults(); } }
+function applyDefaults() { document.querySelectorAll('input').forEach(i => { i.value = i.getAttribute('data-base') || ""; }); build(); }
+function toggleHelp() { const m = document.getElementById('helpModal'); m.style.display = m.style.display === 'flex' ? 'none' : 'flex'; }
 
 function toggleMode() {
     const f = document.getElementById('formMode'), e = document.getElementById('expertMode'), b = document.getElementById('toggleBtn');
-    if(currentMode === "form") {
-        f.style.display = "none"; e.style.display = "block";
-        b.innerText = "📝 Revenir au Formulaire"; currentMode = "expert";
-    } else {
-        f.style.display = "block"; e.style.display = "none";
-        b.innerText = "⚙️ Mode Texte Libre"; currentMode = "form"; build();
-    }
+    if(currentMode === "form") { f.style.display = "none"; e.style.display = "block"; b.innerText = "📝 Formulaire"; currentMode = "expert"; }
+    else { f.style.display = "block"; e.style.display = "none"; b.innerText = "⚙️ Texte Libre"; currentMode = "form"; build(); }
 }
 
 function copyAction(type) {
-    let text = document.getElementById('expertMode').value.replace(/<span.*?>(.*?)<\/span>/g, "$1");
+    let text = document.getElementById('expertMode').value.replace("%%%SPLIT%%%", "");
     if(type === 'friend') text = "```js\n" + text + "\n```";
     navigator.clipboard.writeText(text);
-    const t = document.getElementById('copy-toast'); t.style.opacity = '1'; setTimeout(() => t.style.opacity = '0', 2000);
+    showToast("Annonce complète copiée !");
 }
 
-function toggleHelp() {
-    const m = document.getElementById('helpModal'); m.style.display = m.style.display === 'flex' ? 'none' : 'flex';
+function showToast(txt) {
+    const t = document.getElementById('copy-toast'); t.innerText = txt; t.style.opacity = '1';
+    setTimeout(() => t.style.opacity = '0', 2000);
 }
 
 document.querySelectorAll('input').forEach(input => {
@@ -253,8 +277,7 @@ document.querySelectorAll('input').forEach(input => {
     input.addEventListener('blur', () => { activeFieldId = null; build(); });
 });
 
-// INITIALISATION SANS ALERTE
-window.onload = () => { applyDefaults(); };
+window.onload = applyDefaults;
 </script>
 </body>
 </html>
