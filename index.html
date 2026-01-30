@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UNION TEAM - Dashboard Officier Elite</title>
+    <title>UNION TEAM - Dashboard Officier Final</title>
     <style>
         :root {
             --bg-darker: #1e1f22; --bg-main: #2b2d31; --bg-preview: #313338;
@@ -33,67 +33,55 @@
         .editor-zone { flex: 1.1; background-color: var(--bg-darker); padding: 25px; overflow-y: auto; border-right: 1px solid #1a1b1e; scroll-behavior: smooth; }
         .preview-zone { flex: 0.9; background-color: var(--bg-preview); padding: 25px; overflow-y: auto; position: relative; scroll-behavior: smooth; }
 
-        .module-card { background: #2b2d31; border-radius: 8px; padding: 20px; margin-bottom: 25px; border: 1px solid #3f4147; transition: 0.3s; }
+        /* SELECTEUR DE MODE */
+        .mode-selector { background: #111214; padding: 5px; border-radius: 10px; display: flex; gap: 5px; margin-bottom: 25px; border: 1px solid #3f4147; }
+        .mode-tab { flex: 1; padding: 10px; border: none; border-radius: 6px; background: transparent; color: var(--text-muted); font-size: 11px; font-weight: 800; cursor: pointer; transition: 0.3s; text-transform: uppercase; }
+        .mode-tab.active { background: var(--bg-main); color: white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+
+        .module-card { background: #2b2d31; border-radius: 8px; padding: 20px; margin-bottom: 25px; border: 1px solid #3f4147; transition: 0.2s; }
+        .module-card:focus-within { border-color: var(--accent); }
         .module-card h3 { margin: 0 0 15px 0; font-size: 13px; color: var(--warning); text-transform: uppercase; letter-spacing: 1px; }
 
         /* BLOC NOTES */
-        .notes-container { 
-            background: #111214; border: 1px solid #1a1b1e; border-radius: 8px; 
-            display: flex; flex-direction: column; width: 100%; box-sizing: border-box;
-            max-height: 500px;
-        }
-        .notes-toolbar { 
-            background: #1e1f22; padding: 10px; border-bottom: 1px solid #1a1b1e; 
-            display: flex; gap: 8px; align-items: center; flex-wrap: wrap; position: sticky; top: 0; z-index: 5;
-        }
-        .toolbar-btn {
-            background: #2b2d31; border: 1px solid #3f4147; color: white; padding: 5px 10px; 
-            border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 700; transition: 0.2s;
-        }
-        .toolbar-btn:hover { background: #4e5058; }
+        .notes-container { background: #111214; border: 1px solid #1a1b1e; border-radius: 8px; display: flex; flex-direction: column; width: 100%; box-sizing: border-box; max-height: 450px; }
+        .notes-toolbar { background: #1e1f22; padding: 10px; border-bottom: 1px solid #1a1b1e; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; position: sticky; top: 0; z-index: 5; }
+        .toolbar-btn { background: #2b2d31; border: 1px solid #3f4147; color: white; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 700; }
+        #userNotes { width: 100%; height: 300px; padding: 15px; color: #dbdee1; font-size: 14px; outline: none; overflow-y: auto; box-sizing: border-box; background: transparent; line-height: 1.5; }
+        #userNotes img { max-width: 150px; max-height: 150px; border-radius: 4px; margin: 10px 0; cursor: zoom-in; }
 
-        #userNotes { 
-            width: 100%; height: 350px; padding: 15px; color: #dbdee1; 
-            font-size: 14px; outline: none; overflow-y: auto; box-sizing: border-box;
-            background: transparent; line-height: 1.5;
-        }
-        #userNotes img { 
-            max-width: 150px; max-height: 150px; border-radius: 4px; margin: 10px 0; 
-            border: 2px solid transparent; cursor: zoom-in; transition: 0.2s;
-        }
-        #userNotes img:hover { border-color: var(--accent); transform: scale(1.02); }
-
-        /* LIGHTBOX (Visionneuse) */
-        #lightbox {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none;
-            justify-content: center; align-items: center; z-index: 9999; cursor: zoom-out;
-            animation: fadeIn 0.2s ease;
-        }
-        #lightbox img { max-width: 90%; max-height: 90%; border-radius: 8px; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        /* MODE MANUEL */
+        #manualEditor { width: 100%; height: 800px; background: #111214; color: #dbdee1; border: 1px solid #1a1b1e; border-radius: 8px; padding: 20px; font-family: 'Consolas', monospace; font-size: 14px; line-height: 1.6; resize: none; outline: none; display: none; box-sizing: border-box; }
 
         /* INPUTS */
         .grid-inputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
         .field { display: flex; flex-direction: column; gap: 5px; }
         label { font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; }
         input { background: #111214; border: 1px solid #1a1b1e; border-radius: 4px; padding: 10px; color: white; font-size: 13px; outline: none; }
-        input::placeholder { color: #4e5058; font-style: italic; }
+        input:focus { border-color: var(--accent); background: #1e1f22; }
         .hl-active { background-color: rgba(240, 178, 50, 0.8) !important; color: black !important; font-weight: bold; border-radius: 3px; }
 
+        /* BOUTONS HEADER */
         .btn-group { display: flex; gap: 10px; flex-wrap: wrap; }
         button { padding: 9px 16px; border-radius: 6px; border: none; font-weight: 600; cursor: pointer; font-size: 12px; }
         .btn-blue { background-color: var(--accent); color: white; }
         .btn-green { background-color: var(--success); color: white; }
         .btn-gray { background: #4f545c; color: white; }
+        .btn-split { background: #eb459e; color: white; display: none; }
+
+        /* COMPTEUR ET PREVIEW */
+        .char-counter { position: sticky; top: 0; background: var(--bg-preview); padding: 10px 0; border-bottom: 1px solid #4e5058; margin-bottom: 15px; z-index: 10; display: flex; justify-content: space-between; font-weight: bold; font-size: 12px; }
+        .limit-ok { color: var(--success); }
+        .limit-bad { color: var(--danger); }
 
         .discord-mockup { font-size: 15px; line-height: 1.5; white-space: pre-wrap; color: #dbdee1; padding-bottom: 100px; }
         .discord-mockup strong { color: #fff; }
         .discord-mockup hr { border: none; border-top: 1px solid #4e5058; margin: 25px 0; }
+        
         .scroll-anchor { scroll-margin-top: 60px; display: block; height: 0; width: 0; }
         
+        #lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 9999; cursor: zoom-out; }
+        #lightbox img { max-width: 90%; max-height: 90%; border-radius: 8px; }
         #copy-toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: var(--success); color: white; padding: 12px 25px; border-radius: 30px; opacity: 0; transition: 0.4s; z-index: 9999; pointer-events: none; }
-        .pulse-active { animation: pulse-note 1.5s ease-out; border-color: var(--accent) !important; }
-        @keyframes pulse-note { 0% { box-shadow: 0 0 0 0 rgba(88, 101, 242, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(88, 101, 242, 0); } }
     </style>
 </head>
 <body>
@@ -101,72 +89,78 @@
 <header>
     <div class="brand-group">
         <div class="logo-text">🛡️ UNION TEAM</div>
-        <div class="quick-note-nav" onclick="scrollToNotes()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
-            NOTES
-        </div>
+        <div class="quick-note-nav" onclick="scrollToNotes()">📝 NOTES</div>
     </div>
     <div class="btn-group">
-        <button class="btn-gray" onclick="confirmReset()">🔄 Reset Champs</button>
+        <button class="btn-gray" onclick="confirmReset()">🔄 Reset Defaults</button>
         <button class="btn-blue" onclick="copyAction('pure')">🚀 Copier Tout</button>
         <button class="btn-green" onclick="copyAction('friend')">👥 Code Discord</button>
+        <button class="btn-split" id="btn-p1" onclick="copySplit(1)">✂️ Copier P1</button>
+        <button class="btn-split" id="btn-p2" onclick="copySplit(2)">✂️ Copier P2</button>
     </div>
 </header>
 
 <div class="container">
     <div class="editor-zone">
         
-        <div id="formMode">
+        <div class="mode-selector">
+            <button class="mode-tab active" id="tabAuto" onclick="switchMode('auto')">⚡ Mode Rapide (Champs)</button>
+            <button class="mode-tab" id="tabManual" onclick="switchMode('manual')">✍️ Mode Manuel (Libre)</button>
+        </div>
+
+        <div id="autoContainer">
             <div class="module-card" onfocusin="syncFocus('preview_gold')">
                 <h3>🔥 UNION TEAM GOLD</h3>
                 <div class="grid-inputs">
-                    <div class="field"><label>BDC</label><input type="text" id="g_bdc" placeholder="UNM / NM / Brutal"></div>
-                    <div class="field"><label>Hydre</label><input type="text" id="g_hy" placeholder="Normal / Brutal / Cauchemar"></div>
-                    <div class="field"><label>Chimère</label><input type="text" id="g_ch" placeholder="Difficile / Cauchemar / UNM"></div>
-                    <div class="field"><label>CvC (RP/NRP)</label><input type="text" id="g_cvc" placeholder="150k RP / 80k NRP"></div>
-                    <div class="field"><label>Clash Hydre</label><input type="text" id="g_chy" placeholder="650M"></div>
-                    <div class="field"><label>Clash Chimère</label><input type="text" id="g_cch" placeholder="500M"></div>
-                    <div class="field"><label>Places</label><input type="text" id="g_pl" placeholder="à déterminer"></div>
+                    <div class="field"><label>BDC</label><input type="text" id="g_bdc" value="UNM / NM / Brutal" data-default="UNM / NM / Brutal"></div>
+                    <div class="field"><label>Hydre</label><input type="text" id="g_hy" value="Normal / Difficile / Brutal / Cauchemar" data-default="Normal / Difficile / Brutal / Cauchemar"></div>
+                    <div class="field"><label>Chimère</label><input type="text" id="g_ch" value="Difficile & Cauchemar & UNM tombent" data-default="Difficile & Cauchemar & UNM tombent"></div>
+                    <div class="field"><label>CvC</label><input type="text" id="g_cvc" value="150k RP / 80k NRP" data-default="150k RP / 80k NRP"></div>
+                    <div class="field"><label>Clash Hydre</label><input type="text" id="g_chy" value="650M" data-default="650M"></div>
+                    <div class="field"><label>Clash Chimère</label><input type="text" id="g_cch" value="500M" data-default="500M"></div>
+                    <div class="field"><label>Places</label><input type="text" id="g_pl" value="à déterminer" data-default="à déterminer"></div>
                 </div>
             </div>
 
             <div class="module-card" onfocusin="syncFocus('preview_silver')">
                 <h3>⚔️ UNION TEAM SILVER</h3>
                 <div class="grid-inputs">
-                    <div class="field"><label>BDC</label><input type="text" id="s_bdc" placeholder="UNM & NM"></div>
-                    <div class="field"><label>Hydre</label><input type="text" id="s_hy" placeholder="Normal / Brutal"></div>
-                    <div class="field"><label>Chimère</label><input type="text" id="s_ch" placeholder="Facile & Difficile"></div>
-                    <div class="field"><label>CvC (RP/NRP)</label><input type="text" id="s_cvc" placeholder="100k RP / 50k NRP"></div>
-                    <div class="field"><label>Clash Hydre</label><input type="text" id="s_chy" placeholder="50M"></div>
-                    <div class="field"><label>Places</label><input type="text" id="s_pl" placeholder="à déterminer"></div>
+                    <div class="field"><label>BDC</label><input type="text" id="s_bdc" value="UNM & NM" data-default="UNM & NM"></div>
+                    <div class="field"><label>Hydre</label><input type="text" id="s_hy" value="Normal / Difficile / Brutal" data-default="Normal / Difficile / Brutal"></div>
+                    <div class="field"><label>Chimère</label><input type="text" id="s_ch" value="Facile & Difficile tombent" data-default="Facile & Difficile tombent"></div>
+                    <div class="field"><label>CvC</label><input type="text" id="s_cvc" value="100k RP / 50k NRP" data-default="100k RP / 50k NRP"></div>
+                    <div class="field"><label>Clash Hydre</label><input type="text" id="s_chy" value="50M" data-default="50M"></div>
+                    <div class="field"><label>Places</label><input type="text" id="s_pl" value="à déterminer" data-default="à déterminer"></div>
                 </div>
             </div>
 
             <div class="module-card" onfocusin="syncFocus('preview_savage')">
                 <h3>🔥 UNION TEAM SAVAGE</h3>
                 <div class="grid-inputs">
-                    <div class="field"><label>BDC</label><input type="text" id="sv_bdc" placeholder="UNM / NM"></div>
-                    <div class="field"><label>Hydre</label><input type="text" id="sv_hy" placeholder="Tout tombe"></div>
-                    <div class="field"><label>Chimère</label><input type="text" id="sv_ch" placeholder="Difficile & Cauchemar"></div>
-                    <div class="field"><label>CvC (RP/NRP)</label><input type="text" id="sv_cvc" placeholder="80k RP / 50k NRP"></div>
-                    <div class="field"><label>Clash Hydre</label><input type="text" id="sv_chy" placeholder="80M"></div>
-                    <div class="field"><label>Clash Chimère</label><input type="text" id="sv_cch" placeholder="100M"></div>
-                    <div class="field"><label>Places</label><input type="text" id="sv_pl" placeholder="2 à 3 places dispo"></div>
+                    <div class="field"><label>BDC</label><input type="text" id="sv_bdc" value="UNM / NM" data-default="UNM / NM"></div>
+                    <div class="field"><label>Hydre</label><input type="text" id="sv_hy" value="Normal / Difficile / Brutal / Cauchemar" data-default="Normal / Difficile / Brutal / Cauchemar"></div>
+                    <div class="field"><label>Chimère</label><input type="text" id="sv_ch" value="Difficile & Cauchemar tombent & UNM en cours" data-default="Difficile & Cauchemar tombent & UNM en cours"></div>
+                    <div class="field"><label>CvC</label><input type="text" id="sv_cvc" value="80k RP / 50k NRP" data-default="80k RP / 50k NRP"></div>
+                    <div class="field"><label>Clash Hydre</label><input type="text" id="sv_chy" value="80M" data-default="80M"></div>
+                    <div class="field"><label>Clash Chimère</label><input type="text" id="sv_cch" value="100M" data-default="100M"></div>
+                    <div class="field"><label>Places</label><input type="text" id="sv_pl" value="2 à 3 places dispo" data-default="2 à 3 places dispo"></div>
                 </div>
             </div>
 
             <div class="module-card" onfocusin="syncFocus('preview_bronze')">
                 <h3>🥉 UNION TEAM BRONZE</h3>
                 <div class="grid-inputs">
-                    <div class="field"><label>BDC</label><input type="text" id="b_bdc" placeholder="UNM, NM & Brutal"></div>
-                    <div class="field"><label>Hydre</label><input type="text" id="b_hy" placeholder="Normal"></div>
-                    <div class="field"><label>CvC (RP/NRP)</label><input type="text" id="b_cvc" placeholder="40k RP / 20k NRP"></div>
-                    <div class="field"><label>Places</label><input type="text" id="b_pl" placeholder="2 places dispo !"></div>
+                    <div class="field"><label>BDC</label><input type="text" id="b_bdc" value="UNM, NM & Brutal" data-default="UNM, NM & Brutal"></div>
+                    <div class="field"><label>Hydre</label><input type="text" id="b_hy" value="Normal tombe" data-default="Normal tombe"></div>
+                    <div class="field"><label>CvC</label><input type="text" id="b_cvc" value="40k RP / 20k NRP" data-default="40k RP / 20k NRP"></div>
+                    <div class="field"><label>Places</label><input type="text" id="b_pl" value="2 places dispo !" data-default="2 places dispo !"></div>
                 </div>
             </div>
         </div>
 
-        <div class="module-card" id="notesModule">
+        <textarea id="manualEditor" spellcheck="false" oninput="renderFromManual()"></textarea>
+
+        <div class="module-card" id="notesModule" style="margin-top: 25px;">
             <h3>📓 BLOC-NOTES OFFICIER</h3>
             <div class="notes-container">
                 <div class="notes-toolbar">
@@ -182,56 +176,199 @@
     </div>
 
     <div class="preview-zone">
+        <div class="char-counter">
+            <span>Caractères : <span id="charCount">0</span> / 2000</span>
+            <span id="limitStatus">✅ Discord OK</span>
+        </div>
         <div id="visualPreview" class="discord-mockup"></div>
-        <textarea id="expertMode" style="display:none"></textarea>
     </div>
 </div>
 
-<div id="lightbox" onclick="this.style.display='none'">
-    <img src="" id="lightboxImg">
-</div>
-
+<div id="lightbox" onclick="this.style.display='none'"><img src="" id="lightboxImg"></div>
 <div id="copy-toast">Copié !</div>
 
 <script>
+let activeMode = 'auto';
 let activeFieldId = null;
 
-function scrollToNotes() {
-    const el = document.getElementById('notesModule');
-    el.scrollIntoView({ behavior: 'smooth' });
-    el.classList.remove('pulse-active');
-    void el.offsetWidth;
-    el.classList.add('pulse-active');
+// --- SWITCH MODE (CORRECTION: On remplit le champ AVANT de changer de mode) ---
+function switchMode(mode) {
+    if(mode === 'manual') {
+        // On génère le texte V2 basé sur les inputs actuels
+        const fullContent = constructV2Text(false);
+        // On remplit la textarea
+        document.getElementById('manualEditor').value = fullContent;
+        // On force la variable activeMode immédiatement pour que le rendu se fasse
+        activeMode = 'manual';
+        // On met à jour l'aperçu et le compteur
+        renderFromManual();
+    } else {
+        activeMode = 'auto';
+        build();
+    }
+    
+    // Mise à jour de l'UI
+    document.getElementById('tabAuto').classList.toggle('active', mode === 'auto');
+    document.getElementById('tabManual').classList.toggle('active', mode === 'manual');
+    document.getElementById('autoContainer').style.display = mode === 'auto' ? 'block' : 'none';
+    document.getElementById('manualEditor').style.display = mode === 'manual' ? 'block' : 'none';
 }
 
+function renderFromManual() {
+    const raw = document.getElementById('manualEditor').value;
+    renderPreview(raw);
+    updateCounter(raw);
+}
+
+// --- GENERATION DU TEXTE (Inputs -> Texte) ---
+// Cette fonction est maintenant distincte de la logique d'affichage
+function constructV2Text(isHtml) {
+    let t = `:dart: **[FR] L’Alliance UNION TEAM Recrute !** :dart:\n`;
+    t += `Tu veux un clan actif, organisé, avec une vraie bonne ambiance, des strats solides et une progression garantie ?\n`;
+    t += `Notre Union possède **4 clans : Bronze → Savage → Silver → Gold**, ce qui te permet d’évoluer naturellement selon ton niveau et ton engagement.\n\n⸻\n\n`;
+
+    // GOLD
+    if(isHtml) t += `<span id="preview_gold" class="scroll-anchor"></span>`;
+    t += `:fire:** UNION TEAM GOLD (Top niveau)**\n\n`;
+    t += `:boom: BDC : ${getVal('g_bdc', isHtml)} → tombent tous les jours\n`;
+    t += `:dragon: **Hydre** : ${getVal('g_hy', isHtml)} → tout tombe\n`;
+    t += `:smiling_imp:** Chimère** : ${getVal('g_ch', isHtml)}\n\n`;
+    t += `:heavy_check_mark: **Exigences :**\n\n`;
+    t += `• Frapper **BDC UNM**\n`;
+    t += `• **${getVal('g_cvc', isHtml)}** en CvC\n`;
+    t += `• Quotas minimum Clash Hydre **${getVal('g_chy', isHtml)}** \n`;
+    t += `• Quotas minimum Clash Chimère **${getVal('g_cch', isHtml)}** \n`;
+    t += `• Activité Discord\n`;
+    t += `:dart:** Ambiance chill + performance + bienveillance**\n`;
+    t += `:pushpin: ** Place(s) disponible(s) **: ${getVal('g_pl', isHtml)}\n\n⸻\n\n`;
+
+    // SILVER
+    if(isHtml) t += `<span id="preview_silver" class="scroll-anchor"></span>`;
+    t += `:crossed_swords: **UNION TEAM SILVER (Intermédiaire)**\n\n`;
+    t += `:boom: **BDC** : ${getVal('s_bdc', isHtml)} → tombent tous les jours\n`;
+    t += `:dragon: **Hydre** : ${getVal('s_hy', isHtml)}\n`;
+    t += `:smiling_imp: **Chimère** : ${getVal('s_ch', isHtml)}\n\n`;
+    t += `:heavy_check_mark: **Exigences** :\n\n`;
+    t += `• Frapper** BDC UNM**\n`;
+    t += `• **${getVal('s_cvc', isHtml)}** en CvC\n`;
+    t += `• Quotas minimum Clash Hydre **${getVal('s_chy', isHtml)}** \n`;
+    t += `• Présence Discord\n`;
+    t += `:pushpin: ** Place(s) disponible(s) **: ${getVal('s_pl', isHtml)}\n\n`;
+    
+    // Marqueur Split
+    if(!isHtml) t += "%%%SPLIT%%%";
+    t += `\n⸻\n\n`;
+
+    // SAVAGE
+    if(isHtml) t += `<span id="preview_savage" class="scroll-anchor"></span>`;
+    t += `:fire:** UNION TEAM SAVAGE **\n\n`;
+    t += `:boom: **BDC** : ${getVal('sv_bdc', isHtml)} → tombent tous les jours\n`;
+    t += `:dragon: **Hydre** : ${getVal('sv_hy', isHtml)} → tout tombe\n`;
+    t += `:smiling_imp:** Chimère** : ${getVal('sv_ch', isHtml)} \n\n`;
+    t += `:heavy_check_mark: **Exigences :**\n\n`;
+    t += `• Puissance mini : 2M\n`;
+    t += `• Frapper **BDC UNM & NM**\n`;
+    t += `• **${getVal('sv_cvc', isHtml)}** en CvC\n`;
+    t += `• Quotas minimum Clash Hydre **${getVal('sv_chy', isHtml)}** \n`;
+    t += `• Quotas minimum Clash Chimère **${getVal('sv_cch', isHtml)}** \n`;
+    t += `• Activité Discord\n`;
+    t += `:dart:** Ambiance chill + performance + bienveillance**\n`;
+    t += `:pushpin: ** Place(s) disponible(s) **: ${getVal('sv_pl', isHtml)}\n\n⸻\n\n`;
+
+    // BRONZE
+    if(isHtml) t += `<span id="preview_bronze" class="scroll-anchor"></span>`;
+    t += `:third_place:** UNION TEAM BRONZE (Progression)**\n\n`;
+    t += `:boom: **BDC** : ${getVal('b_bdc', isHtml)} → tombent chaque jour\n`;
+    t += `:punch: **Objectif** : faire tomber l’UNM ensemble !\n`;
+    t += `:dragon: **Hydre** : ${getVal('b_hy', isHtml)}\n\n`;
+    t += `:heavy_check_mark: **Exigences :**\n\n`;
+    t += `• Frapper **BDC UNM**\n`;
+    t += `• **${getVal('b_cvc', isHtml)}** en CvC\n`;
+    t += `• Motivation pour monter vers **Silver**, puis **Gold**\n`;
+    t += `:pushpin: **${getVal('b_pl', isHtml)}**\n\n⸻\n\n`;
+
+    // OUTRO
+    t += `:gift: **Pourquoi nous rejoindre ?**\n\n`;
+    t += `:heavy_check_mark: Une** communauté soudée**, mature et engagée\n`;
+    t += `:heavy_check_mark: Des **strats partagées** en permanence\n`;
+    t += `:heavy_check_mark: Un **Discord actif** : guides, coaching, aide, fun\n`;
+    t += `:heavy_check_mark: Une vraie progression **de Bronze jusqu’à Gold**\n\n⸻\n\n`;
+    t += `:envelope_with_arrow:** Intéressé(e) ?**\nMP direct pour candidater ou poser tes questions.\nOn a hâte de t’accueillir dans l’Union Team :muscle:`;
+
+    return isHtml ? t.replace("%%%SPLIT%%%", "") : t;
+}
+
+function getVal(id, isHtml) {
+    const el = document.getElementById(id);
+    if(!el) return "...";
+    const val = el.value.trim();
+    return (isHtml && id === activeFieldId) ? `<span class="hl-active">${val}</span>` : val;
+}
+
+function renderPreview(content) {
+    const emojiMap = { ":dart:":"🎯", ":fire:":"🔥", ":boom:":"💥", ":dragon:":"🐉", ":smiling_imp:":"😈", ":heavy_check_mark:":"✔️", ":pushpin:":"📌", ":crossed_swords:":"⚔️", ":third_place:":"🥉", ":punch:":"👊", ":gift:":"🎁", ":envelope_with_arrow:":"📩", ":muscle:":"💪" };
+    let html = content.replace("%%%SPLIT%%%", "");
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/⸻/g, '<hr>');
+    for (const [code, icon] of Object.entries(emojiMap)) { html = html.split(code).join(icon); }
+    document.getElementById('visualPreview').innerHTML = html;
+}
+
+function build() {
+    let raw;
+    if(activeMode === 'auto') {
+        raw = constructV2Text(false);
+        renderPreview(constructV2Text(true));
+    } else {
+        raw = document.getElementById('manualEditor').value;
+        renderFromManual();
+    }
+    updateCounter(raw);
+    saveData();
+}
+
+// --- UPDATE COUNTER ---
+function updateCounter(text) {
+    const cleanText = text.replace("%%%SPLIT%%%", "");
+    const len = cleanText.length;
+    document.getElementById('charCount').innerText = len;
+    
+    const status = document.getElementById('limitStatus');
+    const countSpan = document.getElementById('charCount');
+    const btnP1 = document.getElementById('btn-p1');
+    const btnP2 = document.getElementById('btn-p2');
+
+    if(len > 2000) {
+        countSpan.className = 'limit-bad';
+        status.innerHTML = "⚠️ Trop long";
+        status.className = 'limit-bad';
+        btnP1.style.display = 'flex';
+        btnP2.style.display = 'flex';
+    } else {
+        countSpan.className = 'limit-ok';
+        status.innerHTML = "✅ Discord OK";
+        status.className = 'limit-ok';
+        btnP1.style.display = 'none';
+        btnP2.style.display = 'none';
+    }
+}
+
+// --- UTILS ---
 function syncFocus(id) {
     const target = document.getElementById(id);
     if(target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-function execCmd(cmd, val = null) {
-    document.execCommand(cmd, false, val);
-    saveNotes();
-}
-
+function execCmd(cmd, val = null) { document.execCommand(cmd, false, val); saveNotes(); }
 function toggleHighlight() {
-    const selection = window.getSelection();
-    if (!selection.rangeCount) return;
-    
-    // Si la couleur de fond est déjà jaune, on l'enlève
-    const parent = selection.anchorNode.parentElement;
-    if (parent.style.backgroundColor === 'rgb(240, 178, 50)') {
-        document.execCommand('hiliteColor', false, 'transparent');
-    } else {
-        document.execCommand('hiliteColor', false, '#f0b232');
-    }
+    const s = window.getSelection(); if (!s.rangeCount) return;
+    const p = s.anchorNode.parentElement;
+    document.execCommand('hiliteColor', false, (p.style.backgroundColor === 'rgb(240, 178, 50)') ? 'transparent' : '#f0b232');
     saveNotes();
 }
-
 function insertImage(input) {
     if (input.files && input.files[0]) {
         const reader = new FileReader();
-        reader.onload = function(e) {
+        reader.onload = (e) => {
             const img = `<img src="${e.target.result}" onclick="openLightbox(this.src)">`;
             document.execCommand('insertHTML', false, img);
             saveNotes();
@@ -239,129 +376,77 @@ function insertImage(input) {
         reader.readAsDataURL(input.files[0]);
     }
 }
-
-function openLightbox(src) {
-    const lb = document.getElementById('lightbox');
-    const img = document.getElementById('lightboxImg');
-    img.src = src;
-    lb.style.display = 'flex';
-}
-
-function saveNotes() { 
-    localStorage.setItem('unionTeam_richNotes', document.getElementById('userNotes').innerHTML); 
-}
-
-function build() {
-    const raw = generateContent(false);
-    document.getElementById('expertMode').value = raw;
-    renderPreview(generateContent(true));
-    saveData();
-}
-
-function generateContent(isHtml) {
-    let t = `:dart: **[FR] L’Alliance UNION TEAM Recrute !** :dart:\n`;
-    t += `Tu veux un clan actif, organisé, avec une vraie bonne ambiance, des strats solides et une progression garantie ?\n`;
-    t += `Notre Union possède **3 clans : Bronze → Silver → Gold**, ce qui te permet d’évoluer naturellement selon ton niveau et ton engagement.\n\n`;
-
-    const sections = [
-        {id:'g', name:'GOLD (Top niveau)', emoji:':fire:', hy:true, ch:true, chy:true, cch:true, power:false},
-        {id:'s', name:'SILVER (Intermédiaire)', emoji:':crossed_swords:', hy:true, ch:true, chy:true, cch:false, power:false},
-        {id:'sv', name:'SAVAGE', emoji:':fire:', hy:true, ch:true, chy:true, cch:true, power:true},
-        {id:'b', name:'BRONZE (Progression)', emoji:':third_place:', hy:true, ch:false, chy:false, cch:false, power:false}
-    ];
-
-    sections.forEach(s => {
-        if(isHtml) t += `<span id="preview_${s.id === 'g' ? 'gold' : s.id === 's' ? 'silver' : s.id === 'sv' ? 'savage' : 'bronze'}" class="scroll-anchor"></span>`;
-        t += `⸻\n\n${s.emoji}** UNION TEAM ${s.name} **\n\n`;
-        t += `:boom: BDC : ${getVal(s.id+'_bdc', isHtml)} → tombent tous les jours\n`;
-        if(s.hy) t += `:dragon: **Hydre** : ${getVal(s.id+'_hy', isHtml)} ${s.id === 'b' ? 'tombe' : '→ tout tombe'}\n`;
-        if(s.ch) t += `:smiling_imp:** Chimère** : ${getVal(s.id+'_ch', isHtml)} tombent \n`;
-        if(s.id === 'b') t += `:punch: **Objectif** : faire tomber l’UNM ensemble !\n`;
-        
-        t += `\n:heavy_check_mark: **Exigences :**\n\n`;
-        if(s.power) t += `• Puissance mini : 2M\n`;
-        t += `• Frapper **BDC UNM**${s.id === 'sv' ? ' & NM' : ''}\n`;
-        if(getVal(s.id+'_cvc', false)) t += `• **${getVal(s.id+'_cvc', isHtml)}** en CvC\n`;
-        if(s.chy && getVal(s.id+'_chy', false)) t += `• Quotas minimum Clash Hydre **${getVal(s.id+'_chy', isHtml)}** \n`;
-        if(s.cch && getVal(s.id+'_cch', false)) t += `• Quotas minimum Clash Chimère **${getVal(s.id+'_cch', isHtml)}** \n`;
-        
-        if(s.id === 'b') t += `• Motivation pour monter vers **Silver**, puis **Gold**\n`;
-        else t += `• ${s.id === 's' ? 'Présence' : 'Activité'} Discord\n`;
-        
-        if(s.id === 'g' || s.id === 'sv') t += `:dart:** Ambiance chill + performance + bienveillance**\n`;
-        t += `:pushpin: ** Place(s) disponible(s) **: ${getVal(s.id+'_pl', isHtml)}\n\n`;
-    });
-
-    t += `⸻\n\n:gift: **Pourquoi nous rejoindre ?**\n\n`;
-    t += `:heavy_check_mark: Une** communauté soudée**, mature et engagée\n`;
-    t += `:heavy_check_mark: Des **strats partagées** en permanence\n`;
-    t += `:heavy_check_mark: Un **Discord actif** : guides, coaching, aide, fun\n`;
-    t += `:heavy_check_mark: Une vraie progression **de Bronze jusqu’à Gold**\n\n`;
-    t += `⸻\n\n:envelope_with_arrow:** Intéressé(e) ?**\nMP direct pour candidater ou poser tes questions.\nOn a hâte de t’accueillir dans l’Union Team :muscle:`;
-    return isHtml ? t : t;
-}
-
-function getVal(id, isHtml) {
-    const el = document.getElementById(id);
-    const val = el ? el.value.trim() : "";
-    const finalVal = val || (el ? el.placeholder : "");
-    return (isHtml && id === activeFieldId) ? `<span class="hl-active">${finalVal}</span>` : finalVal;
-}
-
-function renderPreview(content) {
-    const emojiMap = { ":dart:":"🎯", ":fire:":"🔥", ":boom:":"💥", ":dragon:":"🐉", ":smiling_imp:":"😈", ":heavy_check_mark:":"✔️", ":pushpin:":"📌", ":crossed_swords:":"⚔️", ":third_place:":"🥉", ":punch:":"👊", ":gift:":"🎁", ":envelope_with_arrow:":"📩", ":muscle:":"💪" };
-    let html = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/⸻/g, '<hr>');
-    for (const [code, icon] of Object.entries(emojiMap)) { html = html.split(code).join(icon); }
-    document.getElementById('visualPreview').innerHTML = html;
-}
-
-function saveData() {
-    const vals = {};
-    document.querySelectorAll('input[type="text"]').forEach(i => vals[i.id] = i.value);
-    localStorage.setItem('unionTeam_save', JSON.stringify(vals));
-}
+function openLightbox(src) { const img = document.getElementById('lightboxImg'); img.src = src; document.getElementById('lightbox').style.display = 'flex'; }
+function scrollToNotes() { document.getElementById('notesModule').scrollIntoView({ behavior: 'smooth' }); }
 
 function copyAction(type) {
-    let text = document.getElementById('expertMode').value;
+    let text = (activeMode === 'manual') ? document.getElementById('manualEditor').value : constructV2Text(false);
+    text = text.replace("%%%SPLIT%%%", "");
     if(type === 'friend') text = "```js\n" + text + "\n```";
     navigator.clipboard.writeText(text);
     showToast("Copié !");
 }
 
-function showToast(m) { 
-    const t = document.getElementById('copy-toast'); t.innerText = m; t.style.opacity = '1'; 
-    setTimeout(() => t.style.opacity = '0', 2000); 
+function copySplit(part) {
+    let text = (activeMode === 'manual') ? document.getElementById('manualEditor').value : constructV2Text(false);
+    const parts = text.split("%%%SPLIT%%%");
+    let textToCopy = "";
+    if(parts.length > 1) {
+         textToCopy = (part === 1) ? parts[0] : parts[1];
+    } else {
+        const mid = Math.floor(text.length / 2);
+        textToCopy = (part === 1) ? text.substring(0, mid) : text.substring(mid);
+    }
+    navigator.clipboard.writeText(textToCopy);
+    showToast(`Partie ${part} copiée !`);
 }
 
-function confirmReset() { 
-    if(confirm("Vider tous les champs ?")) {
-        document.querySelectorAll('input[type="text"]').forEach(i => i.value = "");
+function showToast(m) { const t = document.getElementById('copy-toast'); t.innerText = m; t.style.opacity = '1'; setTimeout(() => t.style.opacity = '0', 2000); }
+
+function saveData() {
+    const vals = {};
+    document.querySelectorAll('#autoContainer input').forEach(i => vals[i.id] = i.value);
+    localStorage.setItem('unionTeam_save', JSON.stringify(vals));
+}
+function saveNotes() { localStorage.setItem('unionTeam_richNotes', document.getElementById('userNotes').innerHTML); }
+
+function confirmReset() {
+    if(confirm("Réinitialiser tous les champs avec les valeurs par défaut ?")) {
+        document.querySelectorAll('#autoContainer input').forEach(i => {
+            i.value = i.getAttribute('data-default');
+        });
         build();
     }
 }
+
+window.onload = () => {
+    const saved = localStorage.getItem('unionTeam_save');
+    if (saved) {
+        const data = JSON.parse(saved);
+        for (const id in data) { 
+            const el = document.getElementById(id);
+            if(el) el.value = data[id]; 
+        }
+    } else {
+        document.querySelectorAll('#autoContainer input').forEach(i => {
+            if(!i.value) i.value = i.getAttribute('data-default');
+        });
+    }
+
+    const savedNotes = localStorage.getItem('unionTeam_richNotes');
+    if(savedNotes) {
+        document.getElementById('userNotes').innerHTML = savedNotes;
+        document.querySelectorAll('#userNotes img').forEach(img => img.onclick = () => openLightbox(img.src));
+    }
+    
+    build();
+};
 
 document.querySelectorAll('input').forEach(input => {
     input.addEventListener('input', (e) => { activeFieldId = e.target.id; build(); });
     input.addEventListener('focus', (e) => { activeFieldId = e.target.id; build(); });
     input.addEventListener('blur', () => { activeFieldId = null; build(); });
 });
-
-window.onload = () => {
-    const saved = localStorage.getItem('unionTeam_save');
-    if (saved) {
-        const data = JSON.parse(saved);
-        for (const id in data) { if(document.getElementById(id)) document.getElementById(id).value = data[id]; }
-    }
-    const savedNotes = localStorage.getItem('unionTeam_richNotes');
-    if(savedNotes) {
-        document.getElementById('userNotes').innerHTML = savedNotes;
-        // Réattribuer l'événement clic aux images chargées depuis la mémoire
-        document.querySelectorAll('#userNotes img').forEach(img => {
-            img.onclick = () => openLightbox(img.src);
-        });
-    }
-    build();
-};
 </script>
 </body>
 </html>
