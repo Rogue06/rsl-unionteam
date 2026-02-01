@@ -8,60 +8,109 @@
         :root {
             --bg-darker: #1e1f22; --bg-main: #2b2d31; --bg-preview: #313338;
             --text-white: #ffffff; --text-main: #dbdee1; --text-muted: #949ba4;
-            --accent: #5865f2; --success: #248046; --warning: #f0b232; --danger: #f23f43;
+            --accent: #5865f2; --accent-hover: #4752c4; --success: #248046; --warning: #f0b232; --danger: #f23f43;
             --glass: rgba(255, 255, 255, 0.05);
+            --border: #1a1b1e;
         }
 
         body, html { margin: 0; padding: 0; height: 100%; font-family: "gg sans", "Inter", sans-serif; background-color: var(--bg-main); color: var(--text-main); overflow: hidden; }
         
-        /* HEADER */
+        /* HEADER 2026 */
         header { 
             background-color: var(--bg-darker); height: 70px; display: flex; align-items: center; justify-content: space-between; 
-            padding: 0 25px; border-bottom: 2px solid #1a1b1e; z-index: 100;
+            padding: 0 25px; border-bottom: 1px solid var(--border); z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.2);
         }
 
-        .brand-group { display: flex; align-items: center; gap: 20px; }
-        .logo-text { font-weight: 800; color: white; font-size: 1.1rem; letter-spacing: 0.5px; }
+        .brand-group { display: flex; align-items: center; gap: 15px; }
+        .logo-text { font-weight: 800; color: white; font-size: 1.1rem; letter-spacing: -0.5px; display: flex; align-items: center; gap: 8px; }
 
         .quick-note-nav {
-            display: flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 20px;
-            background: var(--glass); border: 1px solid rgba(255,255,255,0.08); color: var(--text-muted);
-            font-size: 11px; font-weight: 700; cursor: pointer; transition: 0.3s;
+            display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 8px;
+            background: var(--glass); border: 1px solid rgba(255,255,255,0.05); color: var(--text-muted);
+            font-size: 11px; font-weight: 600; cursor: pointer; transition: 0.2s;
         }
-        .quick-note-nav:hover { background: rgba(88, 101, 242, 0.15); color: white; border-color: var(--accent); }
+        .quick-note-nav:hover { background: rgba(88, 101, 242, 0.1); color: var(--accent); border-color: var(--accent); }
 
+        /* ACTION BAR (RIGHT) */
+        .action-bar { display: flex; align-items: center; gap: 12px; }
+
+        /* Icon Buttons (Reset / Help) */
+        .icon-btn {
+            width: 36px; height: 36px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);
+            background: transparent; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: 0.2s; font-size: 16px; position: relative;
+        }
+        .icon-btn:hover { background: rgba(255,255,255,0.05); color: white; border-color: rgba(255,255,255,0.2); }
+        .badge-dot { position: absolute; top: 6px; right: 6px; width: 6px; height: 6px; background: var(--danger); border-radius: 50%; display: none; }
+
+        /* SPLIT BUTTON GROUP (Le coeur de l'ergonomie) */
+        .split-btn-container { display: flex; position: relative; }
+        
+        .btn-main {
+            background-color: var(--accent); color: white; border: none; padding: 0 20px; height: 36px;
+            font-weight: 600; font-size: 13px; border-radius: 6px 0 0 6px; cursor: pointer; transition: 0.2s;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .btn-main:hover { background-color: var(--accent-hover); }
+
+        .btn-trigger {
+            background-color: var(--accent); border: none; border-left: 1px solid rgba(0,0,0,0.1);
+            width: 30px; height: 36px; border-radius: 0 6px 6px 0; cursor: pointer; color: white;
+            display: flex; align-items: center; justify-content: center; transition: 0.2s;
+        }
+        .btn-trigger:hover { background-color: var(--accent-hover); }
+
+        /* DROPDOWN MENU */
+        .dropdown-menu {
+            position: absolute; top: 45px; right: 0; width: 220px;
+            background: #2b2d31; border: 1px solid #1a1b1e; border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4); opacity: 0; visibility: hidden;
+            transform: translateY(-10px); transition: 0.2s cubic-bezier(0.2, 0, 0, 1); z-index: 200;
+            padding: 6px;
+        }
+        .dropdown-menu.show { opacity: 1; visibility: visible; transform: translateY(0); }
+
+        .menu-item {
+            display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px;
+            border: none; background: transparent; color: #dbdee1; font-size: 13px; font-weight: 500;
+            text-align: left; border-radius: 4px; cursor: pointer; transition: 0.1s;
+        }
+        .menu-item:hover { background: var(--accent); color: white; }
+        .menu-item svg { width: 16px; height: 16px; opacity: 0.7; }
+        .menu-separator { height: 1px; background: #3f4147; margin: 4px 0; }
+        
+        /* Items conditionnels (P1/P2) */
+        .split-item { display: none; color: #eb459e; } 
+        .split-item:hover { background: #eb459e; color: white; }
+
+        /* CONTAINER LAYOUT */
         .container { display: flex; height: calc(100% - 70px); }
-        .editor-zone { flex: 1.1; background-color: var(--bg-darker); padding: 25px; overflow-y: auto; border-right: 1px solid #1a1b1e; scroll-behavior: smooth; }
+        .editor-zone { flex: 1.1; background-color: var(--bg-darker); padding: 25px; overflow-y: auto; border-right: 1px solid var(--border); scroll-behavior: smooth; }
         .preview-zone { flex: 0.9; background-color: var(--bg-preview); padding: 25px; overflow-y: auto; position: relative; scroll-behavior: smooth; }
 
-        /* MODE SELECTOR */
-        .mode-selector { background: #111214; padding: 5px; border-radius: 10px; display: flex; gap: 5px; margin-bottom: 25px; border: 1px solid #3f4147; }
-        .mode-tab { flex: 1; padding: 10px; border: none; border-radius: 6px; background: transparent; color: var(--text-muted); font-size: 11px; font-weight: 800; cursor: pointer; transition: 0.3s; text-transform: uppercase; }
-        .mode-tab.active { background: var(--bg-main); color: white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+        /* Other UI Elements */
+        .mode-selector { background: #111214; padding: 4px; border-radius: 8px; display: flex; gap: 4px; margin-bottom: 25px; border: 1px solid #3f4147; }
+        .mode-tab { flex: 1; padding: 8px; border: none; border-radius: 6px; background: transparent; color: var(--text-muted); font-size: 11px; font-weight: 700; cursor: pointer; transition: 0.2s; text-transform: uppercase; }
+        .mode-tab.active { background: var(--bg-main); color: white; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
 
-        /* OPTIONS GLOBALES (NOUVEAU) */
-        .global-options {
-            background: linear-gradient(90deg, #2b2d31 0%, #202225 100%);
-            border: 1px solid #3f4147; border-radius: 8px; padding: 15px; margin-bottom: 25px;
-            display: flex; align-items: center; justify-content: space-between;
-        }
-        .option-label { font-size: 13px; font-weight: 700; color: white; display: flex; align-items: center; gap: 8px; }
+        .global-options { background: linear-gradient(90deg, #2b2d31 0%, #202225 100%); border: 1px solid #3f4147; border-radius: 8px; padding: 12px 15px; margin-bottom: 25px; display: flex; align-items: center; justify-content: space-between; }
+        .option-label { font-size: 12px; font-weight: 700; color: white; display: flex; align-items: center; gap: 8px; }
         
-        /* Toggle Switch UI */
-        .switch { position: relative; display: inline-block; width: 40px; height: 22px; }
+        .switch { position: relative; display: inline-block; width: 36px; height: 20px; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #4f545c; transition: .4s; border-radius: 22px; }
-        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #4f545c; transition: .4s; border-radius: 20px; }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: var(--success); }
-        input:checked + .slider:before { transform: translateX(18px); }
+        input:checked + .slider:before { transform: translateX(16px); }
 
         .module-card { background: #2b2d31; border-radius: 8px; padding: 20px; margin-bottom: 25px; border: 1px solid #3f4147; transition: 0.2s; }
         .module-card:focus-within { border-color: var(--accent); }
-        .module-card h3 { margin: 0 0 15px 0; font-size: 13px; color: var(--warning); text-transform: uppercase; letter-spacing: 1px; }
+        .module-card h3 { margin: 0 0 15px 0; font-size: 12px; color: var(--warning); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 800; }
 
         .notes-container { background: #111214; border: 1px solid #1a1b1e; border-radius: 8px; display: flex; flex-direction: column; width: 100%; box-sizing: border-box; max-height: 450px; }
-        .notes-toolbar { background: #1e1f22; padding: 10px; border-bottom: 1px solid #1a1b1e; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; position: sticky; top: 0; z-index: 5; }
-        .toolbar-btn { background: #2b2d31; border: 1px solid #3f4147; color: white; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 700; }
+        .notes-toolbar { background: #1e1f22; padding: 8px; border-bottom: 1px solid #1a1b1e; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; position: sticky; top: 0; z-index: 5; }
+        .toolbar-btn { background: #2b2d31; border: 1px solid #3f4147; color: #dbdee1; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 700; }
+        .toolbar-btn:hover { background: #404249; color: white; }
         #userNotes { width: 100%; height: 300px; padding: 15px; color: #dbdee1; font-size: 14px; outline: none; overflow-y: auto; box-sizing: border-box; background: transparent; line-height: 1.5; }
         #userNotes img { max-width: 150px; max-height: 150px; border-radius: 4px; margin: 10px 0; cursor: zoom-in; }
 
@@ -70,24 +119,13 @@
         .grid-inputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
         .field { display: flex; flex-direction: column; gap: 5px; }
         label { font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; }
-        input { background: #111214; border: 1px solid #1a1b1e; border-radius: 4px; padding: 10px; color: white; font-size: 13px; outline: none; }
+        input { background: #111214; border: 1px solid #1a1b1e; border-radius: 4px; padding: 8px 10px; color: white; font-size: 13px; outline: none; transition: 0.2s; }
         input:focus { border-color: var(--accent); background: #1e1f22; }
         .hl-active { background-color: rgba(240, 178, 50, 0.8) !important; color: black !important; font-weight: bold; border-radius: 3px; }
 
-        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; }
-        button { padding: 9px 16px; border-radius: 6px; border: none; font-weight: 600; cursor: pointer; font-size: 12px; transition: 0.2s; }
-        .btn-blue { background-color: var(--accent); color: white; }
-        .btn-blue:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(88, 101, 242, 0.4); }
-        .btn-green { background-color: var(--success); color: white; }
-        .btn-gray { background: #4f545c; color: white; }
-        .btn-purple { background: #9b59b6; color: white; } /* Pour le lien form */
-        .btn-split { background: #eb459e; color: white; display: none; }
-        .btn-help { background: transparent; border: 1px solid var(--text-muted); color: white; display: flex; align-items: center; gap: 6px; }
-        .btn-help:hover { border-color: white; background: rgba(255,255,255,0.1); }
-        
-        .badge-new { background: var(--danger); color: white; font-size: 9px; padding: 2px 6px; border-radius: 10px; font-weight: bold; animation: pulse-badge 2s infinite; }
-        @keyframes pulse-badge { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+        .btn-gray { background: #4f545c; color: white; padding: 8px; width: 100%; border-radius: 4px; border:none; cursor: pointer; font-weight: 600; font-size: 12px; }
 
+        /* COMPTEUR & PREVIEW */
         .char-counter { position: sticky; top: 0; background: var(--bg-preview); padding: 10px 0; border-bottom: 1px solid #4e5058; margin-bottom: 15px; z-index: 10; display: flex; flex-direction: column; gap: 5px; font-size: 12px; }
         .counter-row { display: flex; justify-content: space-between; align-items: center; }
         .limit-ok { color: var(--success); font-weight: bold; }
@@ -121,6 +159,7 @@
         .help-item h4 { color: var(--accent); margin: 0 0 8px 0; font-size: 14px; }
         .help-item p { margin: 0; font-size: 13px; line-height: 1.5; color: #dcddde; }
         .key-badge { background: #3f4147; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 11px; }
+
     </style>
 </head>
 <body>
@@ -130,15 +169,39 @@
         <div class="logo-text">🛡️ UNION TEAM</div>
         <div class="quick-note-nav" onclick="scrollToNotes()">📝 NOTES</div>
     </div>
-    <div class="btn-group">
-        <button class="btn-help" onclick="togglePanel()">
-            <span class="badge-new">NEW</span> ❓ Aide
+    
+    <div class="action-bar">
+        <button class="icon-btn" onclick="togglePanel()" title="Aide">
+            ❓ <span class="badge-dot" style="display:block;"></span>
         </button>
-        <button class="btn-purple" onclick="copyFormLink()">📋 Lien Form</button>
-        <button class="btn-blue" onclick="copyAction('pure')">🚀 Tout Copier</button>
-        <button class="btn-green" onclick="copyAction('friend')">👥 Code Discord</button>
-        <button class="btn-split" id="btn-p1" onclick="copySplit(1)">✂️ Copier P1</button>
-        <button class="btn-split" id="btn-p2" onclick="copySplit(2)">✂️ Copier P2</button>
+        <button class="icon-btn" onclick="confirmReset()" title="Réinitialiser">🔄</button>
+        
+        <div class="split-btn-container" id="menuContainer">
+            <button class="btn-main" onclick="copyAction('pure')">
+                🚀 COPIER L'ANNONCE
+            </button>
+            <button class="btn-trigger" onclick="toggleMenu()">
+                ▼
+            </button>
+            
+            <div class="dropdown-menu" id="exportMenu">
+                <button class="menu-item" onclick="copyFormLink()">
+                    📋 Copier lien Formulaire
+                </button>
+                <button class="menu-item" onclick="copyAction('friend')">
+                    👥 Copier Code Discord
+                </button>
+                
+                <div class="menu-separator"></div>
+                
+                <button class="menu-item split-item" id="menu-p1" onclick="copySplit(1)">
+                    ✂️ Copier Partie 1
+                </button>
+                <button class="menu-item split-item" id="menu-p2" onclick="copySplit(2)">
+                    ✂️ Copier Partie 2
+                </button>
+            </div>
+        </div>
     </div>
 </header>
 
@@ -153,7 +216,7 @@
         <div id="autoContainer">
             <div class="global-options">
                 <div class="option-label">
-                    <span>📝 Inclure le Formulaire de Candidature</span>
+                    <span>📝 Inclure le Formulaire</span>
                 </div>
                 <label class="switch">
                     <input type="checkbox" id="includeForm" onchange="build()">
@@ -252,21 +315,21 @@
     </div>
     <div class="panel-content" id="contentGuide">
         <div class="help-item">
-            <h4>📝 Google Form Intelligent</h4>
-            <p>Utilisez l'interrupteur en haut de la page pour ajouter automatiquement le lien du questionnaire de recrutement à la fin de l'annonce.</p>
+            <h4>🚀 Export Rapide (Nouveau)</h4>
+            <p>Utilisez le bouton principal "Copier" pour l'action par défaut. Cliquez sur la flèche <b>▼</b> pour accéder au lien du formulaire, au code Discord brut ou aux parties découpées (P1/P2).</p>
         </div>
         <div class="help-item">
-            <h4>⚡ Mode Rapide vs Manuel</h4>
-            <p>Utilisez le mode <b>Rapide</b> pour remplir les quotas. Passez en mode <b>Manuel</b> pour modifier le texte. Le mode manuel charge automatiquement le texte actuel.</p>
+            <h4>📝 Google Form Intelligent</h4>
+            <p>Utilisez l'interrupteur en haut de la page pour ajouter automatiquement le lien du questionnaire de recrutement à la fin de l'annonce.</p>
         </div>
     </div>
     <div class="panel-content" id="contentChangelog" style="display:none">
         <div class="changelog-entry" style="border-left: 2px solid var(--accent); padding-left: 15px;">
-            <span style="font-weight:bold; color:white;">Version 3.0</span>
+            <span style="font-weight:bold; color:white;">Version 4.0 - UX 2026</span>
             <ul style="margin:5px 0 0 15px; padding:0; font-size:13px; color:#dbdee1;">
-                <li>🔥 Ajout du clan <b>Savage</b> (4 clans).</li>
-                <li>📋 Intégration intelligente du <b>Google Form</b>.</li>
-                <li>🔘 Bouton rapide pour copier le lien du form.</li>
+                <li>🎨 <b>Interface épurée</b> : Regroupement des boutons dans un menu intelligent.</li>
+                <li>🔥 <b>Savage</b> : Intégration du 4ème clan.</li>
+                <li>⚡ <b>Performance</b> : Chargement instantané.</li>
             </ul>
         </div>
     </div>
@@ -279,6 +342,36 @@
 let activeMode = 'auto';
 let activeFieldId = null;
 const FORM_LINK = "https://docs.google.com/forms/d/1Vx_8eLWIidDnvF1SZuq5bvGnPB-9PaIDtfAYYc9VOBg/viewform";
+
+// --- UI LOGIC (Dropdowns & Panel) ---
+function toggleMenu() {
+    document.getElementById('exportMenu').classList.toggle('show');
+}
+// Fermer le menu si on clique ailleurs
+window.onclick = function(event) {
+    if (!event.target.matches('.btn-trigger')) {
+        var dropdowns = document.getElementsByClassName("dropdown-menu");
+        for (var i = 0; i < dropdowns.length; i++) {
+            var openDropdown = dropdowns[i];
+            if (openDropdown.classList.contains('show')) {
+                openDropdown.classList.remove('show');
+            }
+        }
+    }
+}
+
+function togglePanel() {
+    document.getElementById('sidePanel').classList.toggle('active');
+    document.getElementById('panelOverlay').classList.toggle('active');
+    document.querySelector('.badge-dot').style.display = 'none';
+}
+
+function switchTab(tab) {
+    document.getElementById('tabGuide').classList.toggle('active', tab === 'guide');
+    document.getElementById('tabChangelog').classList.toggle('active', tab === 'changelog');
+    document.getElementById('contentGuide').style.display = tab === 'guide' ? 'block' : 'none';
+    document.getElementById('contentChangelog').style.display = tab === 'changelog' ? 'block' : 'none';
+}
 
 // --- SWITCH MODE ---
 function switchMode(mode) {
@@ -303,7 +396,7 @@ function renderFromManual() {
     updateCounter(raw);
 }
 
-// --- GENERATION DU TEXTE (MISE A JOUR 4 CLANS + FORM) ---
+// --- GENERATION DU TEXTE ---
 function constructV2Text(isHtml) {
     let t = `:dart: **[FR] L’Alliance UNION TEAM Recrute !** :dart:\n`;
     t += `Tu veux un clan actif, organisé, avec une vraie bonne ambiance, des strats solides et une progression garantie ?\n`;
@@ -368,7 +461,6 @@ function constructV2Text(isHtml) {
     t += `• Motivation pour monter vers **Silver**, puis **Gold**\n`;
     t += `:pushpin: **${getVal('b_pl', isHtml)}**\n\n⸻\n\n`;
 
-    // OUTRO
     t += `:gift: **Pourquoi nous rejoindre ?**\n\n`;
     t += `:heavy_check_mark: Une** communauté soudée**, mature et engagée\n`;
     t += `:heavy_check_mark: Des **strats partagées** en permanence\n`;
@@ -376,8 +468,7 @@ function constructV2Text(isHtml) {
     t += `:heavy_check_mark: Une vraie progression **de Bronze jusqu’à Gold**\n\n⸻\n\n`;
     t += `:envelope_with_arrow:** Intéressé(e) ?**\nMP direct pour candidater ou poser tes questions.\nOn a hâte de t’accueillir dans l’Union Team :muscle:`;
 
-    // GESTION DU GOOGLE FORM (NOUVEAU)
-    // On ne l'ajoute que si la case est cochée
+    // GESTION DU FORMULAIRE
     const includeForm = document.getElementById('includeForm');
     if (includeForm && includeForm.checked) {
         t += `\n\n📝 **Tu veux prendre de l'avance ?**\nRemplis notre formulaire de candidature ici : ${FORM_LINK}`;
@@ -397,8 +488,6 @@ function renderPreview(content) {
     const emojiMap = { ":dart:":"🎯", ":fire:":"🔥", ":boom:":"💥", ":dragon:":"🐉", ":smiling_imp:":"😈", ":heavy_check_mark:":"✔️", ":pushpin:":"📌", ":crossed_swords:":"⚔️", ":third_place:":"🥉", ":punch:":"👊", ":gift:":"🎁", ":envelope_with_arrow:":"📩", ":muscle:":"💪" };
     let html = content.replace("%%%SPLIT%%%", "");
     
-    // Rendre le lien cliquable dans la preview
-    // Regex simple pour détecter les URL et les transformer en liens
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     html = html.replace(urlRegex, '<a href="$1" target="_blank" class="discord-link">$1</a>');
 
@@ -427,21 +516,24 @@ function updateCounter(text) {
     
     const status = document.getElementById('limitStatus');
     const countSpan = document.getElementById('charCount');
-    const btnP1 = document.getElementById('btn-p1');
-    const btnP2 = document.getElementById('btn-p2');
+    const p1 = document.getElementById('menu-p1');
+    const p2 = document.getElementById('menu-p2');
 
     if(len > 2000) {
         countSpan.className = 'limit-bad';
-        status.innerHTML = "ℹ️ Nitro requis OU utilisez les boutons P1/P2 ci-dessus";
+        status.innerHTML = "ℹ️ Nitro requis (Voir Menu ▼)";
         status.className = 'limit-info';
-        btnP1.style.display = 'flex';
-        btnP2.style.display = 'flex';
+        p1.style.display = 'flex'; // Affiche dans le menu
+        p2.style.display = 'flex';
+        // Ajout d'un indicateur visuel sur le bouton menu
+        document.querySelector('.btn-trigger').style.background = '#eb459e';
     } else {
         countSpan.className = 'limit-ok';
         status.innerHTML = "✅ Discord OK";
         status.className = 'limit-ok';
-        btnP1.style.display = 'none';
-        btnP2.style.display = 'none';
+        p1.style.display = 'none';
+        p2.style.display = 'none';
+        document.querySelector('.btn-trigger').style.background = ''; // Reset couleur
     }
 }
 
@@ -504,7 +596,6 @@ function showToast(m) { const t = document.getElementById('copy-toast'); t.inner
 function saveData() {
     const vals = {};
     document.querySelectorAll('#autoContainer input[type="text"]').forEach(i => vals[i.id] = i.value);
-    // Sauvegarde de l'état du switch
     const switchState = document.getElementById('includeForm').checked;
     vals['includeForm'] = switchState;
     localStorage.setItem('unionTeam_save', JSON.stringify(vals));
@@ -518,29 +609,6 @@ function confirmReset() {
         });
         build();
     }
-}
-
-// --- PANEL LOGIC ---
-function togglePanel() {
-    const p = document.getElementById('sidePanel');
-    const o = document.getElementById('panelOverlay');
-    const isActive = p.classList.contains('active');
-    
-    if(isActive) {
-        p.classList.remove('active');
-        o.classList.remove('active');
-    } else {
-        p.classList.add('active');
-        o.classList.add('active');
-        document.querySelector('.badge-new').style.display = 'none';
-    }
-}
-
-function switchTab(tab) {
-    document.getElementById('tabGuide').classList.toggle('active', tab === 'guide');
-    document.getElementById('tabChangelog').classList.toggle('active', tab === 'changelog');
-    document.getElementById('contentGuide').style.display = tab === 'guide' ? 'block' : 'none';
-    document.getElementById('contentChangelog').style.display = tab === 'changelog' ? 'block' : 'none';
 }
 
 window.onload = () => {
