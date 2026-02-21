@@ -126,6 +126,10 @@
         .btn-gray { background: #4f545c; color: white; padding: 8px; width: 100%; border-radius: 4px; border:none; cursor: pointer; font-weight: 600; font-size: 12px; }
 
         /* COMPTEUR & PREVIEW */
+        .preview-mode-tabs { display: flex; gap: 4px; margin-bottom: 10px; }
+        .preview-tab { flex: 1; padding: 8px; border: 1px solid #3f4147; border-radius: 6px; background: #2b2d31; color: var(--text-muted); font-size: 11px; font-weight: 700; cursor: pointer; transition: 0.2s; }
+        .preview-tab:hover { background: #3f4147; color: white; }
+        .preview-tab.active { background: var(--accent); color: white; border-color: var(--accent); }
         .char-counter { position: sticky; top: 0; background: var(--bg-preview); padding: 10px 0; border-bottom: 1px solid #4e5058; margin-bottom: 15px; z-index: 10; display: flex; flex-direction: column; gap: 5px; font-size: 12px; }
         .counter-row { display: flex; justify-content: space-between; align-items: center; }
         .limit-ok { color: var(--success); font-weight: bold; }
@@ -190,6 +194,9 @@
                 </button>
                 <button class="menu-item" onclick="copyAction('friend')">
                     👥 Copier Code Discord
+                </button>
+                <button class="menu-item" onclick="copyCompressed()">
+                    📦 Copier version compressée
                 </button>
                 
                 <div class="menu-separator"></div>
@@ -293,9 +300,13 @@
     </div>
 
     <div class="preview-zone">
+        <div class="preview-mode-tabs">
+            <button class="preview-tab active" id="previewTabNormal" onclick="switchPreviewMode('normal')">Vue normale</button>
+            <button class="preview-tab" id="previewTabCompressed" onclick="switchPreviewMode('compressed')">Vue compressée</button>
+        </div>
         <div class="char-counter">
             <div class="counter-row">
-                <span>Total Caractères : <span id="charCount">0</span> / 2000</span>
+                <span id="counterLabel">Total Caractères : <span id="charCount">0</span> / 2000</span>
                 <span id="limitStatus" class="limit-ok">✅ Discord OK</span>
             </div>
         </div>
@@ -315,8 +326,12 @@
     </div>
     <div class="panel-content" id="contentGuide">
         <div class="help-item">
-            <h4>🚀 Export Rapide (Nouveau)</h4>
-            <p>Utilisez le bouton principal "Copier" pour l'action par défaut. Cliquez sur la flèche <b>▼</b> pour accéder au lien du formulaire, au code Discord brut ou aux parties découpées (P1/P2).</p>
+            <h4>🚀 Export Rapide</h4>
+            <p>Utilisez le bouton principal "Copier" pour l'action par défaut. Cliquez sur la flèche <b>▼</b> pour accéder au lien du formulaire, au code Discord brut, à la <b>version compressée</b> (≤2000 car.) ou aux parties découpées (P1/P2).</p>
+        </div>
+        <div class="help-item">
+            <h4>📦 Version compressée</h4>
+            <p>Idéale pour les serveurs avec cooldown : une annonce raccourcie (intro + 4 clans sans mots superflus) qui tient dans 2000 caractères. Utilisez l'onglet <b>Vue compressée</b> pour prévisualiser avant de copier.</p>
         </div>
         <div class="help-item">
             <h4>📝 Google Form Intelligent</h4>
@@ -324,6 +339,13 @@
         </div>
     </div>
     <div class="panel-content" id="contentChangelog" style="display:none">
+        <div class="changelog-entry" style="border-left: 2px solid var(--accent); padding-left: 15px; margin-bottom: 15px;">
+            <span style="font-weight:bold; color:white;">Version 4.1 - Version compressée</span>
+            <ul style="margin:5px 0 0 15px; padding:0; font-size:13px; color:#dbdee1;">
+                <li>📦 <b>Version compressée</b> : Annonce ≤2000 car. pour serveurs avec cooldown.</li>
+                <li>👁️ <b>Vue compressée</b> : Prévisualisation avant copie.</li>
+            </ul>
+        </div>
         <div class="changelog-entry" style="border-left: 2px solid var(--accent); padding-left: 15px;">
             <span style="font-weight:bold; color:white;">Version 4.0 - UX 2026</span>
             <ul style="margin:5px 0 0 15px; padding:0; font-size:13px; color:#dbdee1;">
@@ -341,6 +363,7 @@
 <script>
 let activeMode = 'auto';
 let activeFieldId = null;
+let previewMode = 'normal'; // 'normal' | 'compressed'
 const FORM_LINK = "https://docs.google.com/forms/d/1Vx_8eLWIidDnvF1SZuq5bvGnPB-9PaIDtfAYYc9VOBg/viewform";
 
 // --- UI LOGIC (Dropdowns & Panel) ---
@@ -484,6 +507,118 @@ function getVal(id, isHtml) {
     return (isHtml && id === activeFieldId) ? `<span class="hl-active">${val}</span>` : val;
 }
 
+function getValRaw(id) {
+    const el = document.getElementById(id);
+    return el ? el.value.trim() : "...";
+}
+
+// Formate la valeur "places" en version compacte : place(s)=2, place(s)=2-3, place(s)=?
+function getPlaceCompact(val) {
+    if (!val) return "?";
+    const v = val.toLowerCase().trim();
+    if (v.includes("à déterminer") || v.includes("déterminer") || v === "?" || v === "tbd") return "?";
+    const nums = val.match(/\d+/g);
+    if (nums) return nums.length > 1 ? nums[0] + "-" + nums[1] : nums[0];
+    return val.length > 10 ? val.substring(0, 8) + "…" : val;
+}
+
+// --- VERSION COMPRESSÉE (max 2000 caractères Discord) ---
+// S'adapte en temps réel aux valeurs des champs du formulaire (Mode Rapide)
+// withAnchors=true : ancres de scroll + surlignage jaune (comme Vue normale)
+function constructCompressedText(withAnchors = false) {
+    const anc = (id) => withAnchors ? `<span id="${id}" class="scroll-anchor"></span>` : '';
+    const val = (id) => withAnchors ? getVal(id, true) : getValRaw(id);
+    // Intro raccourcie
+    let t = `:dart: **[FR] UNION TEAM Recrute !** :dart:\n`;
+    t += `Clan actif, organisé, bonne ambiance, strats solides. 4 clans : Bronze → Savage → Silver → Gold, évolution selon ton niveau.\n\n⸻\n\n`;
+
+    // GOLD - sans Frapper, Quotas minimum, Activité, Ambiance
+    t += anc('preview_gold') + `:fire:** UNION TEAM GOLD (Top niveau)**\n\n`;
+    t += `:boom: BDC : ${val('g_bdc')} → tombent tous les jours\n`;
+    t += `:dragon: **Hydre** : ${val('g_hy')} → tout tombe\n`;
+    t += `:smiling_imp:** Chimère** : ${val('g_ch')}\n\n`;
+    t += `:heavy_check_mark: **Exigences :**\n\n`;
+    t += `• **BDC UNM**\n`;
+    t += `• **${val('g_cvc')}** en CvC\n`;
+    t += `• Clash Hydre **${val('g_chy')}**\n`;
+    t += `• Clash Chimère **${val('g_cch')}**\n`;
+    t += `• Discord\n`;
+    t += `place(s)=${getPlaceCompact(getValRaw('g_pl'))}\n\n⸻\n\n`;
+
+    // SILVER
+    t += anc('preview_silver') + `:crossed_swords: **UNION TEAM SILVER (Intermédiaire)**\n\n`;
+    t += `:boom: **BDC** : ${val('s_bdc')} → tombent tous les jours\n`;
+    t += `:dragon: **Hydre** : ${val('s_hy')}\n`;
+    t += `:smiling_imp: **Chimère** : ${val('s_ch')}\n\n`;
+    t += `:heavy_check_mark: **Exigences** :\n\n`;
+    t += `• **BDC UNM**\n`;
+    t += `• **${val('s_cvc')}** en CvC\n`;
+    t += `• Clash Hydre **${val('s_chy')}**\n`;
+    t += `• Discord\n`;
+    t += `place(s)=${getPlaceCompact(getValRaw('s_pl'))}\n\n⸻\n\n`;
+
+    // SAVAGE
+    t += anc('preview_savage') + `:fire:** UNION TEAM SAVAGE **\n\n`;
+    t += `:boom: **BDC** : ${val('sv_bdc')} → tombent tous les jours\n`;
+    t += `:dragon: **Hydre** : ${val('sv_hy')} → tout tombe\n`;
+    t += `:smiling_imp:** Chimère** : ${val('sv_ch')}\n\n`;
+    t += `:heavy_check_mark: **Exigences :**\n\n`;
+    t += `• Puissance mini : 2M\n`;
+    t += `• **BDC UNM & NM**\n`;
+    t += `• **${val('sv_cvc')}** en CvC\n`;
+    t += `• Clash Hydre **${val('sv_chy')}**\n`;
+    t += `• Clash Chimère **${val('sv_cch')}**\n`;
+    t += `• Discord\n`;
+    t += `place(s)=${getPlaceCompact(getValRaw('sv_pl'))}\n\n⸻\n\n`;
+
+    // BRONZE
+    t += anc('preview_bronze') + `:third_place:** UNION TEAM BRONZE (Progression)**\n\n`;
+    t += `:boom: **BDC** : ${val('b_bdc')} → tombent chaque jour\n`;
+    t += `:punch: **Objectif** : faire tomber l'UNM ensemble !\n`;
+    t += `:dragon: **Hydre** : ${val('b_hy')}\n\n`;
+    t += `:heavy_check_mark: **Exigences :**\n\n`;
+    t += `• **BDC UNM**\n`;
+    t += `• **${val('b_cvc')}** en CvC\n`;
+    t += `• Monter vers **Silver**, puis **Gold**\n`;
+    t += `place(s)=${getPlaceCompact(getValRaw('b_pl'))}\n\n⸻\n\n`;
+
+    // Pourquoi nous rejoindre - raccourci
+    t += `:gift: **Pourquoi nous rejoindre ?**\n\n`;
+    t += `:heavy_check_mark: Communauté soudée, mature, engagée\n`;
+    t += `:heavy_check_mark: Strats partagées, Discord actif\n`;
+    t += `:heavy_check_mark: Progression Bronze → Gold\n\n⸻\n\n`;
+    t += `:envelope_with_arrow:** Intéressé(e) ?** MP direct ou formulaire ci-dessous. On t'attend :muscle:`;
+
+    if (document.getElementById('includeForm') && document.getElementById('includeForm').checked) {
+        t += `\n\n📝 Formulaire : ${FORM_LINK}`;
+    }
+
+    // Réduction espaces superflus
+    t = t.replace(/  +/g, ' ').replace(/\n{3,}/g, '\n\n');
+    // Si > 2000 : retirer les lignes place(s) pour gagner de la place
+    if (t.length > 2000) {
+        t = t.replace(/\nplace\(s\)=[^\n]+\n/g, '\n');
+        t = t.replace(/  +/g, ' ').replace(/\n{3,}/g, '\n\n');
+    }
+    if (t.length > 2000) {
+        t = t.substring(0, 1997) + '...';
+    }
+    return t;
+}
+
+function switchPreviewMode(mode) {
+    previewMode = mode;
+    document.getElementById('previewTabNormal').classList.toggle('active', mode === 'normal');
+    document.getElementById('previewTabCompressed').classList.toggle('active', mode === 'compressed');
+    build();
+}
+
+function copyCompressed() {
+    const text = constructCompressedText();
+    navigator.clipboard.writeText(text);
+    showToast("Version compressée copiée !");
+}
+
 function renderPreview(content) {
     const emojiMap = { ":dart:":"🎯", ":fire:":"🔥", ":boom:":"💥", ":dragon:":"🐉", ":smiling_imp:":"😈", ":heavy_check_mark:":"✔️", ":pushpin:":"📌", ":crossed_swords:":"⚔️", ":third_place:":"🥉", ":punch:":"👊", ":gift:":"🎁", ":envelope_with_arrow:":"📩", ":muscle:":"💪" };
     let html = content.replace("%%%SPLIT%%%", "");
@@ -498,14 +633,23 @@ function renderPreview(content) {
 
 function build() {
     let raw;
-    if(activeMode === 'auto') {
-        raw = constructV2Text(false);
-        renderPreview(constructV2Text(true));
+    if (previewMode === 'compressed') {
+        raw = constructCompressedText(false);
+        renderPreview(constructCompressedText(true)); // true = ancres pour sync scroll/focus
+        document.getElementById('counterLabel').innerHTML = 'Version compressée : <span id="charCount">' + raw.length + '</span> / 2000';
+        document.getElementById('limitStatus').innerHTML = raw.length <= 2000 ? '✅ Discord OK' : '⚠️ Trop long';
+        document.getElementById('limitStatus').className = raw.length <= 2000 ? 'limit-ok' : 'limit-bad';
     } else {
-        raw = document.getElementById('manualEditor').value;
-        renderFromManual();
+        if(activeMode === 'auto') {
+            raw = constructV2Text(false);
+            renderPreview(constructV2Text(true));
+        } else {
+            raw = document.getElementById('manualEditor').value;
+            renderPreview(raw.replace("%%%SPLIT%%%", ""));
+        }
+        document.getElementById('counterLabel').innerHTML = 'Total Caractères : <span id="charCount">0</span> / 2000';
+        updateCounter(raw);
     }
-    updateCounter(raw);
     saveData();
 }
 
