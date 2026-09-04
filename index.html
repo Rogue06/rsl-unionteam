@@ -171,6 +171,36 @@
 
         .preview-empty { color: var(--text-muted); font-style: italic; padding: 20px 0; line-height: 1.6; }
 
+        /* BANDEAU DE DECISION
+           Quand l'annonce ne tient pas dans un message Discord, le choix se
+           pose ici, au-dessus du texte concerné, plutôt que dans un menu
+           déroulant qu'il faut penser à ouvrir. */
+        .copy-banner {
+            background: #2b2d31; border: 1px solid var(--warning); border-left-width: 3px;
+            border-radius: 8px; padding: 14px 16px; margin-bottom: 18px;
+        }
+        .copy-banner[hidden] { display: none; }
+        .banner-msg { font-size: 13px; color: var(--text-white); font-weight: 600; margin-bottom: 4px; }
+        .banner-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.5; }
+        .banner-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .banner-btn {
+            background: #3f4147; color: var(--text-white); border: 1px solid #4e5058;
+            border-radius: 6px; padding: 9px 14px; font-size: 12px; font-weight: 700;
+            cursor: pointer; transition: 0.15s;
+        }
+        .banner-btn:hover { background: #4e5058; }
+        .banner-btn.primary { background: var(--accent); border-color: var(--accent); }
+        .banner-btn.primary:hover { background: var(--accent-hover); }
+        .banner-or { font-size: 11px; color: var(--text-muted); font-weight: 600; margin-left: 4px; }
+
+        /* Avertissement quand l'aperçu ne reflète pas ce qu'on a écrit à la main */
+        .preview-notice {
+            background: rgba(240, 178, 50, 0.08); border-left: 3px solid var(--warning);
+            border-radius: 4px; padding: 10px 12px; margin-bottom: 15px;
+            font-size: 12px; color: #dbdee1; line-height: 1.5;
+        }
+        .preview-notice[hidden] { display: none; }
+
         .notes-container { background: #111214; border: 1px solid #1a1b1e; border-radius: 8px; display: flex; flex-direction: column; width: 100%; box-sizing: border-box; max-height: 450px; }
         .notes-toolbar { background: #1e1f22; padding: 8px; border-bottom: 1px solid #1a1b1e; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; position: sticky; top: 0; z-index: 5; }
         .toolbar-btn { background: #2b2d31; border: 1px solid #3f4147; color: #dbdee1; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 700; }
@@ -253,23 +283,14 @@
             </button>
             
             <div class="dropdown-menu" id="exportMenu">
+                <button class="menu-item" onclick="copyCompressed()">
+                    📦 Copier la version courte
+                </button>
                 <button class="menu-item" onclick="copyFormLink()">
-                    📋 Copier lien Formulaire
+                    📋 Copier le lien du formulaire
                 </button>
                 <button class="menu-item" onclick="copyAction('friend')">
-                    👥 Copier Code Discord
-                </button>
-                <button class="menu-item" onclick="copyCompressed()">
-                    📦 Copier version compressée
-                </button>
-                
-                <div class="menu-separator"></div>
-                
-                <button class="menu-item split-item" id="menu-p1" onclick="copySplit(1)">
-                    ✂️ Copier Partie 1
-                </button>
-                <button class="menu-item split-item" id="menu-p2" onclick="copySplit(2)">
-                    ✂️ Copier Partie 2
+                    👥 Copier en bloc de code
                 </button>
             </div>
         </div>
@@ -438,6 +459,17 @@
                 <span id="limitStatus" class="limit-ok">✅ Discord OK</span>
             </div>
         </div>
+        <div class="copy-banner" id="copyBanner" hidden>
+            <div class="banner-msg" id="bannerMsg"></div>
+            <div class="banner-sub" id="bannerSub"></div>
+            <div class="banner-actions" id="bannerActions">
+                <button class="banner-btn primary" id="bannerShort" onclick="copyShort()">Version courte (1 message)</button>
+                <span class="banner-or">ou couper en deux :</span>
+                <button class="banner-btn" onclick="copySplit(1)">Partie 1</button>
+                <button class="banner-btn" onclick="copySplit(2)">Partie 2</button>
+            </div>
+        </div>
+        <div class="preview-notice" id="previewNotice" hidden></div>
         <div id="visualPreview" class="discord-mockup"></div>
     </div>
 </div>
@@ -458,12 +490,12 @@
             <p>Un clan est complet ? Clique sur sa pastille en haut à gauche (ou sur l'interrupteur de sa carte) pour le <b>retirer de l'annonce</b>. Ses valeurs sont conservées : re-clique pour le remettre quand il recrute à nouveau. L'intro, la phrase de progression et la découpe P1/P2 s'ajustent automatiquement aux clans restants.</p>
         </div>
         <div class="help-item">
-            <h4>🚀 Export Rapide</h4>
-            <p>Utilisez le bouton principal "Copier" pour l'action par défaut. Cliquez sur la flèche <b>▼</b> pour accéder au lien du formulaire, au code Discord brut, à la <b>version compressée</b> (≤2000 car.) ou aux parties découpées (P1/P2).</p>
+            <h4>🚀 Copier l'annonce</h4>
+            <p>Le bouton principal copie <b>exactement ce que montre l'aperçu</b> à droite : si vous êtes sur "Vue compressée", vous copiez la version courte. La flèche <b>▼</b> garde les options moins courantes : version courte, lien du formulaire, et bloc de code.</p>
         </div>
         <div class="help-item">
-            <h4>📦 Version compressée</h4>
-            <p>Idéale pour les serveurs avec cooldown : une annonce raccourcie (intro + 4 clans sans mots superflus) qui tient dans 2000 caractères. Utilisez l'onglet <b>Vue compressée</b> pour prévisualiser avant de copier.</p>
+            <h4>⚠️ Annonce trop longue</h4>
+            <p>Discord refuse les messages de plus de 2000 caractères sans abonnement Nitro. Quand c'est le cas, un bandeau apparaît au-dessus de l'aperçu avec les deux solutions : copier la <b>version courte</b> (elle tient en un message), ou couper l'annonce en <b>deux messages</b> à coller l'un après l'autre. Retirer un clan complet raccourcit aussi l'annonce.</p>
         </div>
         <div class="help-item">
             <h4>📝 Google Form Intelligent</h4>
@@ -895,9 +927,45 @@ function switchPreviewMode(mode) {
 
 function copyCompressed() {
     if (!requireClans()) return;
-    const text = constructCompressedText();
-    navigator.clipboard.writeText(text);
-    showToast("Version compressée copiée !");
+    // La version courte est reconstruite depuis les champs. En Mode Manuel
+    // elle écrasait donc les retouches sans prévenir : on le dit avant.
+    if (activeMode === 'manual' && !confirm(
+        "La version courte est reconstruite à partir des champs du Mode Rapide.\n\n" +
+        "Les retouches faites à la main ne seront pas reprises. Continuer ?")) return;
+    navigator.clipboard.writeText(constructCompressedText());
+    showToast("Version courte copiée !");
+}
+
+// Affiche le choix au moment où il se pose, plutôt que de renvoyer vers un
+// menu déroulant avec un message parlant de Nitro.
+function updateCopyBanner(raw) {
+    const banner = document.getElementById('copyBanner');
+    const trop = raw.replace("%%%SPLIT%%%", "").length > 2000;
+    banner.hidden = !trop;
+    if (!trop) return;
+
+    const len = raw.replace("%%%SPLIT%%%", "").length;
+    const dejaCourte = (previewMode === 'compressed');
+    document.getElementById('bannerMsg').innerText =
+        `⚠️ ${len} caractères : trop long pour un seul message Discord.`;
+    document.getElementById('bannerSub').innerText = dejaCourte
+        ? "Même raccourcie, l'annonce dépasse la limite. Coupe-la en deux messages, ou retire un clan."
+        : "La limite est de 2000 caractères sans abonnement Nitro. Deux solutions :";
+    // Proposer la version courte n'a de sens que si on ne la regarde pas déjà
+    document.getElementById('bannerShort').hidden = dejaCourte;
+    document.querySelector('.banner-or').innerText = dejaCourte ? "couper en deux :" : "ou couper en deux :";
+}
+
+// L'aperçu compressé est toujours reconstruit depuis les champs : en Mode
+// Manuel, il ne montre pas ce que la personne vient d'écrire.
+function updatePreviewNotice() {
+    const notice = document.getElementById('previewNotice');
+    const decale = (activeMode === 'manual' && previewMode === 'compressed');
+    notice.hidden = !decale;
+    if (decale) {
+        notice.innerText = "Cet aperçu est reconstruit à partir des champs du Mode Rapide : "
+            + "tes retouches manuelles n'y apparaissent pas.";
+    }
 }
 
 function renderPreview(content) {
@@ -923,9 +991,8 @@ function build() {
         const status = document.getElementById('limitStatus');
         status.innerHTML = "⚠️ Aucun clan";
         status.className = 'limit-bad';
-        document.getElementById('menu-p1').style.display = 'none';
-        document.getElementById('menu-p2').style.display = 'none';
-        document.querySelector('.btn-trigger').style.background = '';
+        document.getElementById('copyBanner').hidden = true;
+        document.getElementById('previewNotice').hidden = true;
         saveData();
         return;
     }
@@ -948,6 +1015,8 @@ function build() {
         document.getElementById('counterLabel').innerHTML = 'Total Caractères : <span id="charCount">0</span> / 2000';
         updateCounter(raw);
     }
+    updateCopyBanner(raw);
+    updatePreviewNotice();
     saveData();
 }
 
@@ -958,24 +1027,17 @@ function updateCounter(text) {
     
     const status = document.getElementById('limitStatus');
     const countSpan = document.getElementById('charCount');
-    const p1 = document.getElementById('menu-p1');
-    const p2 = document.getElementById('menu-p2');
 
+    // Le quoi-faire est dans le bandeau juste en dessous : ici on se contente
+    // de dire si ça passe ou non.
     if(len > 2000) {
         countSpan.className = 'limit-bad';
-        status.innerHTML = "ℹ️ Nitro requis (Voir Menu ▼)";
+        status.innerHTML = "⚠️ Trop long pour un message";
         status.className = 'limit-info';
-        p1.style.display = 'flex'; // Affiche dans le menu
-        p2.style.display = 'flex';
-        // Ajout d'un indicateur visuel sur le bouton menu
-        document.querySelector('.btn-trigger').style.background = '#eb459e';
     } else {
         countSpan.className = 'limit-ok';
         status.innerHTML = "✅ Discord OK";
         status.className = 'limit-ok';
-        p1.style.display = 'none';
-        p2.style.display = 'none';
-        document.querySelector('.btn-trigger').style.background = ''; // Reset couleur
     }
 }
 
@@ -1006,18 +1068,39 @@ function insertImage(input) {
 function openLightbox(src) { const img = document.getElementById('lightboxImg'); img.src = src; document.getElementById('lightbox').style.display = 'flex'; }
 function scrollToNotes() { document.getElementById('notesModule').scrollIntoView({ behavior: 'smooth' }); }
 
+// Le texte réellement affiché à l'écran. Avant, le bouton principal
+// reconstruisait toujours la version longue : en "Vue compressée" on croyait
+// copier le texte court et Discord refusait le message sans qu'on comprenne.
+function currentText() {
+    if (previewMode === 'compressed') return constructCompressedText(false);
+    if (activeMode === 'manual') return document.getElementById('manualEditor').value;
+    return constructV2Text(false);
+}
+
 function copyAction(type) {
-    if (activeMode === 'auto' && !requireClans()) return;
-    let text = (activeMode === 'manual') ? document.getElementById('manualEditor').value : constructV2Text(false);
-    text = text.replace("%%%SPLIT%%%", "");
+    // Le texte vient des champs sauf en Mode Manuel hors vue compressée :
+    // dans ce cas seulement, la sélection de clans n'a rien à dire.
+    const issuDesChamps = (previewMode === 'compressed') || (activeMode === 'auto');
+    if (issuDesChamps && !requireClans()) return;
+    let text = currentText().replace("%%%SPLIT%%%", "");
     if(type === 'friend') text = "```js\n" + text + "\n```";
     navigator.clipboard.writeText(text);
-    showToast("Copié !");
+    showToast(previewMode === 'compressed' ? "Version courte copiée !" : "Annonce copiée !");
+}
+
+// Bascule l'aperçu sur la version courte avant de la copier : on ne veut pas
+// copier autre chose que ce qui est sous les yeux.
+function copyShort() {
+    if (!requireClans()) return;
+    if (previewMode !== 'compressed') switchPreviewMode('compressed');
+    navigator.clipboard.writeText(constructCompressedText(false));
+    showToast("Version courte copiée !");
 }
 
 function copySplit(part) {
-    if (activeMode === 'auto' && !requireClans()) return;
-    let text = (activeMode === 'manual') ? document.getElementById('manualEditor').value : constructV2Text(false);
+    const issuDesChamps = (previewMode === 'compressed') || (activeMode === 'auto');
+    if (issuDesChamps && !requireClans()) return;
+    let text = currentText();
     const parts = text.split("%%%SPLIT%%%");
     let textToCopy = "";
     if(parts.length > 1) {
