@@ -193,6 +193,37 @@
         .banner-btn.primary:hover { background: var(--accent-hover); }
         .banner-or { font-size: 11px; color: var(--text-muted); font-weight: 600; margin-left: 4px; }
 
+        /* CADRE DE VERSION
+           Les traits ⸻ séparent les sections de l'annonce ; sans cadre, on les
+           lit comme une frontière entre deux versions. Le cadre dit où la
+           version commence et où elle s'arrête. */
+        .version-badge {
+            display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px;
+            border-radius: 20px; font-size: 11px; font-weight: 800; text-transform: uppercase;
+            letter-spacing: 0.5px; border: 1px solid var(--v); color: var(--v);
+            background: color-mix(in srgb, var(--v) 12%, transparent);
+        }
+        .preview-frame { --v: var(--accent); border-left: 2px solid var(--v); padding-left: 14px; }
+        .preview-frame.short { --v: var(--success); }
+        .preview-frame.manual { --v: var(--warning); }
+        .char-counter { --v: var(--accent); }
+        .char-counter.short { --v: var(--success); }
+        .char-counter.manual { --v: var(--warning); }
+
+        .frame-foot {
+            margin-top: 10px; padding: 10px 0 30px 0; border-top: 1px dashed #4e5058;
+            font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Où tombe la coupure entre deux messages Discord */
+        .msg-cut {
+            display: flex; align-items: center; gap: 10px; margin: 28px 0;
+            font-size: 11px; font-weight: 700; color: var(--warning); text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .msg-cut::before, .msg-cut::after { content: ""; flex: 1; border-top: 1px dashed var(--warning); opacity: 0.5; }
+
         /* Avertissement quand l'aperçu ne reflète pas ce qu'on a écrit à la main */
         .preview-notice {
             background: rgba(240, 178, 50, 0.08); border-left: 3px solid var(--warning);
@@ -230,7 +261,8 @@
         .limit-bad { color: var(--danger); font-weight: bold; } 
         .limit-info { color: var(--warning); font-weight: normal; font-size: 11px; display: flex; align-items: center; gap: 6px; }
 
-        .discord-mockup { font-size: 15px; line-height: 1.5; white-space: pre-wrap; color: #dbdee1; padding-bottom: 100px; }
+        /* Le pied du cadre marque la fin : plus besoin de 100px de vide. */
+        .discord-mockup { font-size: 15px; line-height: 1.5; white-space: pre-wrap; color: #dbdee1; }
         .discord-mockup strong { color: #fff; }
         .discord-mockup hr { border: none; border-top: 1px solid #4e5058; margin: 25px 0; }
         .discord-link { color: #00b0f4; text-decoration: none; }
@@ -453,10 +485,13 @@
             <button class="preview-tab active" id="previewTabNormal" onclick="switchPreviewMode('normal')">Vue normale</button>
             <button class="preview-tab" id="previewTabCompressed" onclick="switchPreviewMode('compressed')">Vue compressée</button>
         </div>
-        <div class="char-counter">
+        <div class="char-counter" id="charCounter">
+            <div class="counter-row">
+                <span class="version-badge" id="versionBadge">Annonce complète</span>
+                <span id="limitStatus" class="limit-ok">✅ Discord OK</span>
+            </div>
             <div class="counter-row">
                 <span id="counterLabel">Total Caractères : <span id="charCount">0</span> / 2000</span>
-                <span id="limitStatus" class="limit-ok">✅ Discord OK</span>
             </div>
         </div>
         <div class="copy-banner" id="copyBanner" hidden>
@@ -469,7 +504,10 @@
             </div>
         </div>
         <div class="preview-notice" id="previewNotice" hidden></div>
-        <div id="visualPreview" class="discord-mockup"></div>
+        <div class="preview-frame" id="previewFrame">
+            <div id="visualPreview" class="discord-mockup"></div>
+            <div class="frame-foot" id="frameFoot"></div>
+        </div>
     </div>
 </div>
 
@@ -636,7 +674,9 @@ function switchTab(tab) {
 // --- SWITCH MODE ---
 function switchMode(mode) {
     if(mode === 'manual') {
-        const fullContent = constructV2Text(false);
+        // Sans ce nettoyage, l'éditeur affichait "%%%SPLIT%%%" en plein milieu
+        // de l'annonce. La coupure est recalculée à la copie de toute façon.
+        const fullContent = constructV2Text(false).replace("%%%SPLIT%%%", "").replace(/\n{3,}/g, '\n\n');
         document.getElementById('manualEditor').value = fullContent;
         activeMode = 'manual';
         renderFromManual();
@@ -657,6 +697,7 @@ function renderFromManual() {
     // Sans ça, le bandeau gardait le découpage du texte précédent : on
     // collait deux messages et la fin de l'annonce disparaissait.
     updateCopyBanner(raw);
+    updateVersionFraming(raw);
     updatePreviewNotice();
 }
 
@@ -794,7 +835,9 @@ function constructV2Text(isHtml) {
     let tail = why + SEP;
     tail += `:envelope_with_arrow:** Intéressé(e) ?**\nMP direct pour candidater ou poser tes questions.\nOn a hâte de t’accueillir dans l’Union Team :muscle:`;
 
-    let t = assemble(intro, blocks, tail, !isHtml);
+    // Le marqueur est gardé aussi pour l'aperçu : c'est lui qui sert à dessiner
+    // la coupure entre les deux messages.
+    let t = assemble(intro, blocks, tail, true);
 
     // GESTION DU FORMULAIRE
     const includeForm = document.getElementById('includeForm');
@@ -802,7 +845,7 @@ function constructV2Text(isHtml) {
         t += `\n\n📝 **Tu veux prendre de l'avance ?**\nRemplis notre formulaire de candidature ici : ${FORM_LINK}`;
     }
 
-    return isHtml ? t.replace("%%%SPLIT%%%", "") : t;
+    return t;
 }
 
 function getVal(id, isHtml) {
@@ -974,6 +1017,38 @@ function updateCopyBanner(raw) {
         .join(' ');
 }
 
+// Nomme la version affichée et marque sa fin. Les traits ⸻ séparent les
+// sections ; sans ce cadre on les prend pour la frontière entre la version
+// courte et la version longue.
+function updateVersionFraming(raw) {
+    const courte = (previewMode === 'compressed');
+    const manuel = (activeMode === 'manual' && !courte);
+    const nom = courte ? 'Version courte' : (manuel ? 'Annonce retouchée à la main' : 'Annonce complète');
+    const nb = decouperPourDiscord(raw).length;
+
+    const badge = document.getElementById('versionBadge');
+    badge.innerText = nom;
+
+    const teinte = courte ? 'short' : (manuel ? 'manual' : 'full');
+    ['previewFrame', 'charCounter'].forEach(id => {
+        const el = document.getElementById(id);
+        el.classList.remove('short', 'manual', 'full');
+        el.classList.add(teinte);
+    });
+
+    document.getElementById('frameFoot').innerText =
+        `Fin de « ${nom.toLowerCase()} » — ${nb === 1 ? 'un seul message à coller' : nb + ' messages à coller'}`;
+}
+
+// Matérialise la coupure dans l'aperçu, pour qu'on voie ce que contient
+// chaque message plutôt que de le deviner.
+function marquerCoupure(html, raw) {
+    const trop = raw.replace("%%%SPLIT%%%", "").length > 2000;
+    return html.replace("%%%SPLIT%%%\n⸻", trop
+        ? '<div class="msg-cut">Fin du message 1 · la suite part dans un 2e message</div>'
+        : '');
+}
+
 // L'aperçu compressé est toujours reconstruit depuis les champs : en Mode
 // Manuel, il ne montre pas ce que la personne vient d'écrire.
 function updatePreviewNotice() {
@@ -1025,7 +1100,7 @@ function build() {
     } else {
         if(activeMode === 'auto') {
             raw = constructV2Text(false);
-            renderPreview(constructV2Text(true));
+            renderPreview(marquerCoupure(constructV2Text(true), raw));
         } else {
             raw = document.getElementById('manualEditor').value;
             renderPreview(raw.replace("%%%SPLIT%%%", ""));
@@ -1034,6 +1109,7 @@ function build() {
         updateCounter(raw);
     }
     updateCopyBanner(raw);
+    updateVersionFraming(raw);
     updatePreviewNotice();
     saveData();
 }
@@ -1191,7 +1267,8 @@ function confirmReset() {
     // champs à zéro mais laissait l'éditeur intact, et le bouton ne servait à
     // rien pour quelqu'un qui venait d'effacer son annonce.
     if (activeMode === 'manual') {
-        document.getElementById('manualEditor').value = constructV2Text(false);
+        document.getElementById('manualEditor').value =
+            constructV2Text(false).replace("%%%SPLIT%%%", "").replace(/\n{3,}/g, '\n\n');
         renderFromManual();
         saveData();
     } else {
