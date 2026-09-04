@@ -267,6 +267,54 @@
             .compare-col { border-right: none; border-bottom: 1px solid #1a1b1e; }
         }
 
+        /* TOURNÉE DE PUBLICATION
+           Le temps ne part pas dans le collage mais dans la navigation :
+           retrouver le serveur, le salon, et se rappeler si le cooldown est
+           passé. C'est ça qu'on range ici. */
+        .tournee-note {
+            background: rgba(240, 178, 50, 0.08); border-left: 3px solid var(--warning);
+            border-radius: 4px; padding: 10px 12px; margin-bottom: 18px;
+            font-size: 12px; color: #dcddde; line-height: 1.5;
+        }
+        .serv-row { background: #2b2d31; border: 1px solid #3f4147; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; }
+        .serv-row.pret { border-left: 3px solid var(--success); }
+        .serv-row.attente { border-left: 3px solid var(--text-muted); }
+        .serv-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+        .serv-nom { font-size: 13px; font-weight: 700; color: white; line-height: 1.35; }
+        .serv-etat { font-size: 10px; font-weight: 800; text-transform: uppercase; white-space: nowrap; padding-top: 2px; }
+        .serv-etat.ok { color: #86e0a8; }
+        .serv-etat.wait { color: var(--text-muted); }
+        .serv-meta { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+        .serv-invit {
+            display: inline-block; margin-top: 6px; font-size: 11px; font-weight: 600;
+            color: var(--accent); text-decoration: none; background: none; border: none;
+            padding: 0; cursor: pointer; text-align: left;
+        }
+        .serv-invit:hover { text-decoration: underline; }
+        .serv-invit.vide { color: var(--text-muted); }
+        .serv-invit.vide:hover { color: var(--text-main); }
+
+        .serv-ctrl { display: flex; align-items: center; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+        .serv-ctrl select, .serv-ctrl input[type="number"] {
+            background: #111214; border: 1px solid #1a1b1e; border-radius: 4px; color: #dbdee1;
+            font-size: 11px; padding: 5px 6px; outline: none;
+        }
+        .serv-ctrl input[type="number"] { width: 52px; }
+        .serv-go {
+            flex: 1; min-width: 140px; background: var(--accent); color: white; border: none;
+            border-radius: 6px; padding: 8px 10px; font-size: 12px; font-weight: 700; cursor: pointer;
+        }
+        .serv-go:hover { background: var(--accent-hover); }
+        .serv-part { background: #3f4147; color: white; border: 1px solid #4e5058; border-radius: 6px; padding: 8px 10px; font-size: 11px; font-weight: 700; cursor: pointer; }
+        .serv-part:hover { background: #4e5058; }
+        .serv-mini { background: transparent; border: 1px solid #3f4147; color: var(--text-muted); border-radius: 6px; padding: 7px 9px; font-size: 11px; cursor: pointer; }
+        .serv-mini:hover { color: white; border-color: var(--text-muted); }
+        .serv-mini.danger:hover { color: var(--danger); border-color: var(--danger); }
+
+        .serv-add { border: 1px dashed #4e5058; border-radius: 8px; padding: 14px; margin-top: 18px; }
+        .serv-add h4 { margin: 0 0 10px 0; font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .serv-add input[type="text"] { width: 100%; box-sizing: border-box; margin-bottom: 8px; font-size: 12px; }
+
         /* Où tombe la coupure entre deux messages Discord */
         .msg-cut {
             display: flex; align-items: center; gap: 10px; margin: 28px 0;
@@ -349,6 +397,7 @@
     <div class="brand-group">
         <div class="logo-text">🛡️ UNION TEAM</div>
         <div class="quick-note-nav" onclick="scrollToNotes()">📝 NOTES</div>
+        <div class="quick-note-nav" onclick="toggleTournee()">📣 TOURNÉE</div>
     </div>
     
     <div class="action-bar">
@@ -618,6 +667,28 @@
                 <li>🔥 <b>Savage</b> : Intégration du 4ème clan.</li>
                 <li>⚡ <b>Performance</b> : Chargement instantané.</li>
             </ul>
+        </div>
+    </div>
+</div>
+
+<div class="side-panel-overlay" id="tourneeOverlay" onclick="toggleTournee()"></div>
+<div class="side-panel" id="tourneePanel">
+    <div class="panel-header">
+        <h2>📣 Tournée de publication</h2>
+        <button class="close-panel" onclick="toggleTournee()">✕</button>
+    </div>
+    <div class="panel-content">
+        <div class="tournee-note">
+            Les liens n'ouvrent le bon salon que si <b>tu es déjà membre du serveur</b>. Sinon Discord
+            affiche une page vide : rejoins-le une fois, le lien marchera ensuite.
+        </div>
+        <div id="serveursListe"></div>
+        <div class="serv-add">
+            <h4>Ajouter un serveur</h4>
+            <input type="text" id="newServNom" placeholder="Nom du serveur (ex. RSL Belgique)">
+            <input type="text" id="newServUrl" placeholder="Lien du salon : https://discord.com/channels/...">
+            <input type="text" id="newServInvit" placeholder="Lien d'invitation (facultatif) : https://discord.gg/...">
+            <button class="btn-gray" onclick="ajouterServeur()">Ajouter à la tournée</button>
         </div>
     </div>
 </div>
@@ -1384,6 +1455,190 @@ function copyFormLink() {
 
 function showToast(m) { const t = document.getElementById('copy-toast'); t.innerText = m; t.style.opacity = '1'; setTimeout(() => t.style.opacity = '0', 2000); }
 
+// --- TOURNÉE DE PUBLICATION ---
+// Poster à la main dans ces salons est parfaitement autorisé : ils sont faits
+// pour ça. Ce qu'on automatise ici, ce sont nos propres notes et nos propres
+// liens — jamais une action sur Discord, qui coûterait le compte.
+const SERVEURS_DEFAUT = [
+    { id: 's1', nom: 'Raid Shadow Legends – Francophone', url: 'https://discord.com/channels/407639414236381185/623497026532802560' },
+    { id: 's2', nom: 'Chazzup', url: 'https://discord.com/channels/754403793633935412/1048715083510980678' },
+    { id: 's3', nom: 'HellHades', url: 'https://discord.com/channels/649358411246469135/656732287269863434' },
+    { id: 's4', nom: 'Raid Shadow Legends – Officiel', url: 'https://discord.com/channels/532196192051003443/545977701471617027' },
+    { id: 's5', nom: 'ElPierro', url: 'https://discord.com/channels/800751593556672574/800810683691696178' },
+    { id: 's6', nom: 'La taverne du tavernain', url: 'https://discord.com/channels/841075314373033994/1096453082000412754' }
+];
+
+let serveurs = [];
+
+function chargerServeurs() {
+    const sauve = store.get('unionTeam_serveurs');
+    if (sauve) {
+        try { serveurs = JSON.parse(sauve); } catch (e) { serveurs = null; }
+    }
+    if (!Array.isArray(serveurs) || !serveurs.length) {
+        serveurs = SERVEURS_DEFAUT.map(s => ({ ...s, version: 'courte', cooldown: 24, dernierPost: null }));
+    }
+}
+
+function sauverServeurs() { store.set('unionTeam_serveurs', JSON.stringify(serveurs)); }
+
+function toggleTournee() {
+    const ouvert = document.getElementById('tourneePanel').classList.toggle('active');
+    document.getElementById('tourneeOverlay').classList.toggle('active');
+    if (ouvert) renderServeurs();
+}
+
+// "il y a 3 h", "il y a 5 j" : plus lisible qu'une date quand ce qui compte
+// est le temps écoulé.
+function depuis(ts) {
+    if (!ts) return 'jamais publié';
+    const h = Math.floor((Date.now() - ts) / 3600000);
+    if (h < 1) return 'publié il y a moins d\'une heure';
+    if (h < 24) return `publié il y a ${h} h`;
+    const j = Math.floor(h / 24);
+    return `publié il y a ${j} j`;
+}
+
+function heuresRestantes(s) {
+    if (!s.dernierPost) return 0;
+    const restant = (s.dernierPost + s.cooldown * 3600000) - Date.now();
+    return restant > 0 ? Math.ceil(restant / 3600000) : 0;
+}
+
+function texteServeur(s) {
+    return s.version === 'courte'
+        ? constructCompressedText(false)
+        : constructV2Text(false);
+}
+
+function renderServeurs() {
+    const zone = document.getElementById('serveursListe');
+    if (!clanCount()) {
+        zone.innerHTML = '<div class="preview-empty">Aucun clan dans l\'annonce : réactive un clan avant de publier.</div>';
+        return;
+    }
+
+    zone.innerHTML = serveurs.map(s => {
+        const reste = heuresRestantes(s);
+        const parts = decouperPourDiscord(texteServeur(s));
+        const suite = parts.length > 1
+            ? parts.slice(1).map((p, i) => `<button class="serv-part" onclick="copierPartie('${s.id}', ${i + 2})">Partie ${i + 2}</button>`).join('')
+            : '';
+        return `<div class="serv-row ${reste ? 'attente' : 'pret'}">
+            <div class="serv-head">
+                <div>
+                    <div class="serv-nom">${s.nom}</div>
+                    <div class="serv-meta">${depuis(s.dernierPost)} · ${parts.length > 1 ? parts.length + ' messages' : '1 message'}</div>
+                    ${s.invitation
+                        ? `<a class="serv-invit" href="${s.invitation}" target="_blank" rel="noopener">Pas encore membre ? Rejoindre ce Discord</a>`
+                        : `<button class="serv-invit vide" onclick="definirInvitation('${s.id}')">+ ajouter le lien d'invitation</button>`}
+                </div>
+                <span class="serv-etat ${reste ? 'wait' : 'ok'}">${reste ? 'dans ' + reste + ' h' : 'prêt'}</span>
+            </div>
+            <div class="serv-ctrl">
+                <button class="serv-go" onclick="publierVers('${s.id}')">Copier + ouvrir</button>
+                ${suite}
+                <select onchange="changerVersion('${s.id}', this.value)" title="Version à publier">
+                    <option value="courte" ${s.version === 'courte' ? 'selected' : ''}>Courte</option>
+                    <option value="complete" ${s.version === 'complete' ? 'selected' : ''}>Complète</option>
+                </select>
+                <input type="number" min="0" max="720" value="${s.cooldown}" title="Délai entre deux publications, en heures"
+                       onchange="changerCooldown('${s.id}', this.value)">
+                <button class="serv-mini" onclick="oublierPost('${s.id}')" title="Je n'ai finalement pas publié">↺</button>
+                <button class="serv-mini danger" onclick="supprimerServeur('${s.id}')" title="Retirer de la tournée">✕</button>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function publierVers(id) {
+    const s = serveurs.find(x => x.id === id);
+    if (!s || !requireClans()) return;
+    const parts = decouperPourDiscord(texteServeur(s));
+    navigator.clipboard.writeText(parts[0]);
+    s.dernierPost = Date.now();
+    sauverServeurs();
+    renderServeurs();
+    window.open(s.url, '_blank');
+    showToast(parts.length > 1
+        ? `Partie 1 sur ${parts.length} copiée — colle, puis reviens ici`
+        : 'Annonce copiée — colle dans le salon');
+}
+
+function copierPartie(id, n) {
+    const s = serveurs.find(x => x.id === id);
+    if (!s) return;
+    const parts = decouperPourDiscord(texteServeur(s));
+    if (!parts[n - 1]) return;
+    navigator.clipboard.writeText(parts[n - 1]);
+    showToast(`Partie ${n} sur ${parts.length} copiée`);
+}
+
+// Le lien de salon ne fonctionne que pour un membre : l'invitation permet à un
+// nouvel officier de rejoindre le serveur d'abord.
+function definirInvitation(id) {
+    const s = serveurs.find(x => x.id === id);
+    if (!s) return;
+    const saisie = prompt(`Lien d'invitation pour « ${s.nom} »\n\n(ex. https://discord.gg/xxxxx — laisse vide pour retirer)`, s.invitation || '');
+    if (saisie === null) return;
+    const url = saisie.trim();
+    if (url && !/^https:\/\/(discord\.gg|discord\.com\/invite|discordapp\.com\/invite)\//.test(url)) {
+        showToast("Ce n'est pas un lien d'invitation Discord");
+        return;
+    }
+    s.invitation = url || null;
+    sauverServeurs();
+    renderServeurs();
+}
+
+function changerVersion(id, v) {
+    const s = serveurs.find(x => x.id === id);
+    if (s) { s.version = v; sauverServeurs(); renderServeurs(); }
+}
+
+function changerCooldown(id, h) {
+    const s = serveurs.find(x => x.id === id);
+    if (s) { s.cooldown = Math.max(0, parseInt(h, 10) || 0); sauverServeurs(); renderServeurs(); }
+}
+
+// On marque comme publié dès la copie : c'est le geste le plus courant.
+// Ce bouton sert quand on a ouvert le salon sans finalement poster.
+function oublierPost(id) {
+    const s = serveurs.find(x => x.id === id);
+    if (s) { s.dernierPost = null; sauverServeurs(); renderServeurs(); }
+}
+
+function supprimerServeur(id) {
+    const s = serveurs.find(x => x.id === id);
+    if (s && confirm(`Retirer « ${s.nom} » de la tournée ?`)) {
+        serveurs = serveurs.filter(x => x.id !== id);
+        sauverServeurs();
+        renderServeurs();
+    }
+}
+
+function ajouterServeur() {
+    const nom = document.getElementById('newServNom').value.trim();
+    const url = document.getElementById('newServUrl').value.trim();
+    if (!nom || !url) { showToast('Nom et lien sont nécessaires'); return; }
+    if (!/^https:\/\/(discord\.com|discordapp\.com)\/channels\//.test(url)) {
+        showToast("Ce lien n'est pas un lien de salon Discord");
+        return;
+    }
+    const invit = document.getElementById('newServInvit').value.trim();
+    if (invit && !/^https:\/\/(discord\.gg|discord\.com\/invite|discordapp\.com\/invite)\//.test(invit)) {
+        showToast("Le lien d'invitation n'est pas valide");
+        return;
+    }
+    serveurs.push({ id: 'u' + Date.now(), nom, url, invitation: invit || null, version: 'courte', cooldown: 24, dernierPost: null });
+    sauverServeurs();
+    renderServeurs();
+    document.getElementById('newServNom').value = '';
+    document.getElementById('newServUrl').value = '';
+    document.getElementById('newServInvit').value = '';
+    showToast('Serveur ajouté');
+}
+
 function saveData() {
     const vals = {};
     document.querySelectorAll('#autoContainer input[type="text"]').forEach(i => vals[i.id] = i.value);
@@ -1447,6 +1702,7 @@ window.onload = () => {
         document.querySelectorAll('#userNotes img').forEach(img => img.onclick = () => openLightbox(img.src));
     }
 
+    chargerServeurs();
     applyClanUI();
     build();
 };
