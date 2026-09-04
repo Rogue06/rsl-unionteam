@@ -718,23 +718,45 @@
                 Pour joindre l'affiche : colle-la d'abord dans Discord (Ctrl+V), colle l'annonce
                 juste après, puis Entrée. <b>Les deux partent dans le même message.</b>
             </p>
-            <div class="affiche-ctrl" style="margin-bottom:10px">
-                <label class="affiche-joindre">
-                    <input type="checkbox" id="afficheJointe" onchange="changerAfficheJointe(this.checked)">
-                    <span>Joindre l'affiche à chaque publication</span>
-                </label>
+            <div class="affiche-ctrl" style="margin-bottom:12px">
+                <span class="serv-lab">joindre l'affiche</span>
+                <select id="modeAffiche" onchange="changerModeAffiche(this.value)">
+                    <option value="aucun">Non, texte seul</option>
+                    <option value="lien">En lien — 1 seul collage</option>
+                    <option value="fichier">En pièce jointe — 2 collages</option>
+                </select>
             </div>
-            <div class="affiche-ctrl">
-                <button class="serv-go" onclick="copierAffiche()">Copier l'affiche seule</button>
-                <span class="serv-delai">
-                    <span class="serv-lab">taille</span>
-                    <select id="afficheTaille" onchange="changerTailleAffiche(this.value)">
-                        <option value="400">Petite</option>
-                        <option value="600" selected>Moyenne</option>
-                        <option value="900">Grande</option>
-                        <option value="1200">Maximale</option>
-                    </select>
-                </span>
+
+            <div id="blocLien" hidden>
+                <p class="affiche-aide">
+                    L'adresse de l'affiche est ajoutée à la fin de l'annonce et Discord affiche
+                    l'image dessous. <b>Un seul « Copier + ouvrir » suffit.</b> Revers : l'adresse
+                    reste écrite dans le message, visible par tous.
+                </p>
+                <input type="text" id="afficheLien" onchange="changerAfficheLien(this.value)"
+                       placeholder="Adresse de l'affiche" style="width:100%;box-sizing:border-box;font-size:11px">
+                <p class="affiche-aide" style="margin-top:6px">
+                    Pour ne pas montrer ton dépôt, héberge l'affiche ailleurs et colle l'adresse ici.
+                </p>
+            </div>
+
+            <div id="blocFichier" hidden>
+                <p class="affiche-aide">
+                    L'image part en pièce jointe, <b>aucune adresse dans le message</b>. Le bouton
+                    de chaque serveur devient « 1 · Affiche + ouvrir » puis « 2 · Copier l'annonce ».
+                </p>
+                <div class="affiche-ctrl">
+                    <button class="serv-go" onclick="copierAffiche()">Copier l'affiche seule</button>
+                    <span class="serv-delai">
+                        <span class="serv-lab">taille</span>
+                        <select id="afficheTaille" onchange="changerTailleAffiche(this.value)">
+                            <option value="400">Petite</option>
+                            <option value="600" selected>Moyenne</option>
+                            <option value="900">Grande</option>
+                            <option value="1200">Maximale</option>
+                        </select>
+                    </span>
+                </div>
             </div>
         </div>
         <div id="serveursListe"></div>
@@ -1041,6 +1063,10 @@ function constructV2Text(isHtml) {
         t += `\n\n📝 **Tu veux prendre de l'avance ?**\nRemplis notre formulaire de candidature ici : ${FORM_LINK}`;
     }
 
+    // L'adresse nue en fin de message : c'est elle qui déclenche l'aperçu de
+    // l'affiche sous l'annonce.
+    if (modeAffiche === 'lien') t += `\n\n${afficheLien}`;
+
     return t;
 }
 
@@ -1149,17 +1175,22 @@ function constructCompressedText(withAnchors = false) {
         t += `\n\n📝 Formulaire : ${FORM_LINK}`;
     }
 
+    // L'adresse de l'affiche est réservée hors budget : sinon la troncature
+    // finale la couperait en deux et l'image ne s'afficherait pas.
+    const suffixeAffiche = (modeAffiche === 'lien') ? `\n${afficheLien}` : '';
+    const limite = 2000 - suffixeAffiche.length;
+
     // Réduction espaces superflus
     t = t.replace(/  +/g, ' ').replace(/\n{3,}/g, '\n\n');
-    // Si > 2000 : retirer les lignes place(s) pour gagner de la place
-    if (t.length > 2000) {
+    // Si trop long : retirer les lignes place(s) pour gagner de la place
+    if (t.length > limite) {
         t = t.replace(/\nplace\(s\)=[^\n]+\n/g, '\n');
         t = t.replace(/  +/g, ' ').replace(/\n{3,}/g, '\n\n');
     }
-    if (t.length > 2000) {
-        t = t.substring(0, 1997) + '...';
+    if (t.length > limite) {
+        t = t.substring(0, limite - 3) + '...';
     }
-    return t;
+    return t + suffixeAffiche;
 }
 
 function switchPreviewMode(mode) {
@@ -1516,8 +1547,30 @@ function showToast(m) { const t = document.getElementById('copy-toast'); t.inner
 // Elle est servie avec l'outil, donc chaque officier l'obtient sans l'avoir
 // sur sa machine.
 const AFFICHE_URL = 'affiche.webp';
+// Adresse publique de l'affiche, celle qui part dans l'annonce en mode lien.
+// Modifiable : un autre hébergeur donne une adresse qui ne dit rien du dépôt.
+const AFFICHE_LIEN_DEFAUT = 'https://rogue06.github.io/rsl-unionteam/affiche.webp';
+let afficheLien = AFFICHE_LIEN_DEFAUT;
+// 'aucun' | 'lien' (une seule copie, adresse visible) | 'fichier' (deux collages, rien d'écrit)
+let modeAffiche = 'aucun';
 let affichePng = null;
 let afficheTaille = 600;
+
+function changerModeAffiche(mode) {
+    modeAffiche = mode;
+    store.set('unionTeam_modeAffiche', mode);
+    Object.keys(etapeServeur).forEach(k => delete etapeServeur[k]);
+    document.getElementById('blocFichier').hidden = (mode !== 'fichier');
+    document.getElementById('blocLien').hidden = (mode !== 'lien');
+    renderServeurs();
+    build();
+}
+
+function changerAfficheLien(url) {
+    afficheLien = url.trim() || AFFICHE_LIEN_DEFAUT;
+    store.set('unionTeam_afficheLien', afficheLien);
+    build();
+}
 
 // Discord réduit une image trop grande pour l'afficher, mais ne l'agrandit
 // jamais : la largeur de l'image collée commande donc sa taille dans le
@@ -1545,15 +1598,7 @@ async function preparerAffiche() {
 // Le presse-papier ne tient qu'une chose à la fois : impossible d'y mettre
 // l'image ET le texte. À défaut d'un bouton unique, le bouton se souvient de
 // l'étape, pour n'avoir jamais à se demander ce qu'on vient de copier.
-let afficheJointe = false;
 const etapeServeur = {};
-
-function changerAfficheJointe(actif) {
-    afficheJointe = !!actif;
-    store.set('unionTeam_afficheJointe', afficheJointe ? '1' : '0');
-    Object.keys(etapeServeur).forEach(k => delete etapeServeur[k]);
-    renderServeurs();
-}
 
 async function etapeAffiche(id) {
     const s = serveurs.find(x => x.id === id);
@@ -1750,7 +1795,7 @@ function renderServeurs() {
                 <span class="serv-etat ${reste ? 'wait' : 'ok'}" id="etat_${s.id}">${attenteTexte(s)}</span>
             </div>
             <div class="serv-ctrl">
-                ${!afficheJointe
+                ${modeAffiche !== 'fichier'
                     ? `<button class="serv-go" onclick="publierVers('${s.id}')">Copier + ouvrir</button>`
                     : (etapeServeur[s.id] === 2
                         ? `<button class="serv-go etape2" onclick="etapeAnnonce('${s.id}')">2 · Copier l'annonce</button>`
@@ -1928,9 +1973,17 @@ window.onload = () => {
     ouvrirDansAppli = store.get('unionTeam_ouvrirAppli') === '1';
     const caseAppli = document.getElementById('ouvrirAppli');
     if (caseAppli) caseAppli.checked = ouvrirDansAppli;
-    afficheJointe = store.get('unionTeam_afficheJointe') === '1';
-    const caseJointe = document.getElementById('afficheJointe');
-    if (caseJointe) caseJointe.checked = afficheJointe;
+    afficheLien = store.get('unionTeam_afficheLien') || AFFICHE_LIEN_DEFAUT;
+    const champLien = document.getElementById('afficheLien');
+    if (champLien) champLien.value = afficheLien;
+    const modeSauve = store.get('unionTeam_modeAffiche');
+    if (modeSauve) {
+        modeAffiche = modeSauve;
+        const sel = document.getElementById('modeAffiche');
+        if (sel) sel.value = modeAffiche;
+        document.getElementById('blocFichier').hidden = (modeAffiche !== 'fichier');
+        document.getElementById('blocLien').hidden = (modeAffiche !== 'lien');
+    }
     const tailleSauvee = store.get('unionTeam_afficheTaille');
     if (tailleSauvee) {
         afficheTaille = parseInt(tailleSauvee, 10) || 600;
