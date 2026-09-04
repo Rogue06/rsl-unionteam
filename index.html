@@ -1647,13 +1647,15 @@ function replierSurOnglet() {
 // Poster à la main dans ces salons est parfaitement autorisé : ils sont faits
 // pour ça. Ce qu'on automatise ici, ce sont nos propres notes et nos propres
 // liens — jamais une action sur Discord, qui coûterait le compte.
+// Les délais viennent des règles constatées sur chaque serveur : sans eux,
+// chaque officier repartait de 24 h et devait les retrouver lui-même.
 const SERVEURS_DEFAUT = [
-    { id: 's1', nom: 'Raid Shadow Legends – Francophone', url: 'https://discord.com/channels/407639414236381185/623497026532802560', invitation: 'https://discord.gg/4Aw3HJzxgt' },
-    { id: 's2', nom: 'Chazzup', url: 'https://discord.com/channels/754403793633935412/1048715083510980678', invitation: 'https://discord.gg/CtdTRsNqcG' },
-    { id: 's3', nom: 'HellHades', url: 'https://discord.com/channels/649358411246469135/656732287269863434', invitation: 'https://discord.gg/Gjd342NgW5' },
-    { id: 's4', nom: 'Raid Shadow Legends – Officiel', url: 'https://discord.com/channels/532196192051003443/545977701471617027', invitation: 'https://discord.gg/raidshadowlegends' },
-    { id: 's5', nom: 'ElPierro', url: 'https://discord.com/channels/800751593556672574/800810683691696178', invitation: 'https://discord.gg/PYxDefSgVr' },
-    { id: 's6', nom: 'La taverne du tavernain', url: 'https://discord.com/channels/841075314373033994/1096453082000412754', invitation: 'https://discord.gg/GS8tk2cwce' }
+    { id: 's1', nom: 'Raid Shadow Legends – Francophone', url: 'https://discord.com/channels/407639414236381185/623497026532802560', invitation: 'https://discord.gg/4Aw3HJzxgt', cooldown: 6 },
+    { id: 's2', nom: 'Chazzup', url: 'https://discord.com/channels/754403793633935412/1048715083510980678', invitation: 'https://discord.gg/CtdTRsNqcG', cooldown: 1 },
+    { id: 's3', nom: 'HellHades', url: 'https://discord.com/channels/649358411246469135/656732287269863434', invitation: 'https://discord.gg/Gjd342NgW5', cooldown: 6 },
+    { id: 's4', nom: 'Raid Shadow Legends – Officiel', url: 'https://discord.com/channels/532196192051003443/545977701471617027', invitation: 'https://discord.gg/raidshadowlegends', cooldown: 6 },
+    { id: 's5', nom: 'ElPierro', url: 'https://discord.com/channels/800751593556672574/800810683691696178', invitation: 'https://discord.gg/PYxDefSgVr', cooldown: 6 },
+    { id: 's6', nom: 'La taverne du tavernain', url: 'https://discord.com/channels/841075314373033994/1096453082000412754', invitation: 'https://discord.gg/GS8tk2cwce', cooldown: 1 }
 ];
 
 let serveurs = [];
@@ -1664,7 +1666,9 @@ function chargerServeurs() {
         try { serveurs = JSON.parse(sauve); } catch (e) { serveurs = null; }
     }
     if (!Array.isArray(serveurs) || !serveurs.length) {
-        serveurs = SERVEURS_DEFAUT.map(s => ({ ...s, version: 'courte', cooldown: 24, dernierPost: null }));
+        // Les valeurs communes d'abord : la copie du serveur doit pouvoir les
+        // remplacer, sinon son délai propre serait écrasé par le 24 h générique.
+        serveurs = SERVEURS_DEFAUT.map(s => ({ version: 'courte', cooldown: 24, dernierPost: null, ...s }));
         return;
     }
     // Liste déjà enregistrée avant l'ajout des invitations : on complète celles
@@ -1672,7 +1676,14 @@ function chargerServeurs() {
     let complete = false;
     SERVEURS_DEFAUT.forEach(defaut => {
         const s = serveurs.find(x => x.id === defaut.id);
-        if (s && !s.invitation && defaut.invitation) { s.invitation = defaut.invitation; complete = true; }
+        if (!s) return;
+        if (!s.invitation && defaut.invitation) { s.invitation = defaut.invitation; complete = true; }
+        // 24 h était l'ancienne valeur commune : la remplacer par le délai réel
+        // du serveur. Un délai déjà réglé à la main n'est jamais touché.
+        if (s.cooldown === 24 && defaut.cooldown && defaut.cooldown !== 24) {
+            s.cooldown = defaut.cooldown;
+            complete = true;
+        }
     });
     if (complete) sauverServeurs();
 }
