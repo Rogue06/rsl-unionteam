@@ -216,6 +216,30 @@
             letter-spacing: 0.5px;
         }
 
+        /* COMPARAISON DES DEUX VERSIONS
+           Pour choisir avant de copier, il faut voir ce que la version courte
+           enlève — pas basculer entre deux onglets en essayant de se souvenir. */
+        .diff-summary { background: #2b2d31; border: 1px solid #3f4147; border-radius: 8px; padding: 14px 16px; margin-bottom: 20px; }
+        .diff-sum-line { font-size: 13px; color: #dbdee1; margin-bottom: 5px; }
+        .diff-sum-note { color: var(--text-muted); font-size: 12px; margin-top: 8px; }
+        .diff-legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 12px; padding-top: 12px; border-top: 1px solid #3f4147; }
+        .diff-key { font-size: 11px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+        .diff-key::before { content: ""; width: 12px; height: 12px; border-radius: 3px; }
+        .diff-key.retire { color: #f8a5a7; }
+        .diff-key.retire::before { background: rgba(242, 63, 67, 0.35); }
+        .diff-key.ajoute { color: #86e0a8; }
+        .diff-key.ajoute::before { background: rgba(36, 128, 70, 0.45); }
+
+        .diff-body { white-space: pre-wrap; font-size: 14px; line-height: 1.5; }
+        .diff-ligne { padding: 2px 8px; border-radius: 3px; border-left: 3px solid transparent; }
+        .diff-vide { height: 10px; }
+        .diff-egal { color: #dbdee1; }
+        .diff-retire { background: rgba(242, 63, 67, 0.13); border-left-color: var(--danger); color: #f0b8ba; text-decoration: line-through; text-decoration-color: rgba(242,63,67,0.6); }
+        .diff-ajoute { background: rgba(36, 128, 70, 0.18); border-left-color: var(--success); color: #b5e8c9; }
+        .diff-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 24px; padding-top: 18px; border-top: 1px solid #4e5058; }
+
+        .btn-main[disabled] { opacity: 0.45; cursor: not-allowed; }
+
         /* Où tombe la coupure entre deux messages Discord */
         .msg-cut {
             display: flex; align-items: center; gap: 10px; margin: 28px 0;
@@ -482,8 +506,9 @@
 
     <div class="preview-zone">
         <div class="preview-mode-tabs">
-            <button class="preview-tab active" id="previewTabNormal" onclick="switchPreviewMode('normal')">Vue normale</button>
-            <button class="preview-tab" id="previewTabCompressed" onclick="switchPreviewMode('compressed')">Vue compressée</button>
+            <button class="preview-tab active" id="previewTabNormal" onclick="switchPreviewMode('normal')">Complète</button>
+            <button class="preview-tab" id="previewTabCompressed" onclick="switchPreviewMode('compressed')">Courte</button>
+            <button class="preview-tab" id="previewTabCompare" onclick="switchPreviewMode('compare')">⇄ Comparer</button>
         </div>
         <div class="char-counter" id="charCounter">
             <div class="counter-row">
@@ -529,6 +554,10 @@
         <div class="help-item">
             <h4>🚀 Copier l'annonce</h4>
             <p>Le bouton principal copie <b>exactement ce que montre l'aperçu</b> à droite : si vous êtes sur "Vue compressée", vous copiez la version courte. La flèche <b>▼</b> garde les options moins courantes : version courte, lien du formulaire, et bloc de code.</p>
+        </div>
+        <div class="help-item">
+            <h4>⇄ Choisir sa version</h4>
+            <p>L'onglet <b>Comparer</b> montre l'annonce complète avec, en rouge, tout ce que la version courte ne reprend pas, et en vert ce qu'elle met à la place. On voit donc ce qu'on perd <b>avant</b> de copier, au lieu de basculer entre deux onglets. Les deux boutons en bas de la comparaison copient directement la version choisie.</p>
         </div>
         <div class="help-item">
             <h4>⚠️ Annonce trop longue</h4>
@@ -705,44 +734,40 @@ function renderFromManual() {
 const SEP = `\n\n⸻\n\n`;
 const SPLIT_SEP = `\n\n%%%SPLIT%%%\n⸻\n\n`;
 
-// Phrase d'intro : elle annonce le nombre exact de clans ouverts et leur
-// progression, sinon on promet "4 clans" alors qu'on n'en affiche que deux.
+// L'Union possède ses quatre clans en permanence : retirer un clan de
+// l'annonce dit qu'il ne recrute pas, pas qu'il n'existe plus. Ces phrases
+// décrivent la structure de l'Union, elles ne suivent donc pas la sélection.
 function introSentence(compressed) {
-    const prog = clansIn(CLAN_PROGRESSION);
-    const chain = prog.map(k => CLAN_LABEL[k]).join(' → ');
-    if (prog.length === 1) {
-        const solo = CLAN_LABEL[prog[0]].toUpperCase();
-        return compressed
-            ? `Recrutement **UNION TEAM ${solo}**.`
-            : `Nous recrutons actuellement pour **UNION TEAM ${solo}**.`;
-    }
+    const chaine = CLAN_PROGRESSION.map(k => CLAN_LABEL[k]).join(' → ');
     return compressed
-        ? `${prog.length} clans : ${chain}, évolution selon ton niveau.`
-        : `Notre Union possède **${prog.length} clans : ${chain}**, ce qui te permet d’évoluer naturellement selon ton niveau et ton engagement.`;
+        ? `${CLAN_ORDER.length} clans : ${chaine}, évolution selon ton niveau.`
+        : `Notre Union possède **${CLAN_ORDER.length} clans : ${chaine}**, ce qui te permet d’évoluer naturellement selon ton niveau et ton engagement.`;
 }
 
-// "Motivation pour monter vers Silver, puis Gold" : on ne cite que les clans
-// encore ouverts, sinon on envoie le candidat vers un clan complet.
+// Ce qui change réellement selon la sélection : les clans qui recrutent.
+// Rien à préciser quand ils recrutent tous.
+function clansOuvertsPhrase(compressed) {
+    const ouverts = clansIn(CLAN_ORDER);
+    if (ouverts.length === CLAN_ORDER.length || ouverts.length === 0) return null;
+    const noms = ouverts.map(k => CLAN_LABEL[k]);
+    const liste = noms.length > 1
+        ? noms.slice(0, -1).join(', ') + ' et ' + noms[noms.length - 1]
+        : noms[0];
+    return compressed
+        ? `Recrutement ouvert : ${liste}. Les autres clans sont complets.`
+        : `:pushpin: **Recrutement ouvert : ${liste}.** Les autres clans sont complets pour le moment.`;
+}
+
 function bronzeMotivation(compressed) {
-    const higher = ['silver', 'gold'].filter(k => activeClans[k]);
-    const prefix = compressed ? `• Monter vers ` : `• Motivation pour monter vers `;
-    if (higher.length === 2) return prefix + `**Silver**, puis **Gold**`;
-    if (higher.length === 1) return prefix + `**${CLAN_LABEL[higher[0]]}**`;
-    if (activeClans.savage) return prefix + `**Savage**`;
-    return compressed ? `• Envie de progresser` : `• Motivation et envie de progresser`;
+    return compressed
+        ? `• Monter vers **Silver**, puis **Gold**`
+        : `• Motivation pour monter vers **Silver**, puis **Gold**`;
 }
 
-// Ligne de progression du bloc "Pourquoi nous rejoindre" (omise s'il ne reste
-// qu'un seul clan : il n'y a plus de progression à annoncer).
 function progressionLine(compressed) {
-    const prog = clansIn(CLAN_PROGRESSION);
-    if (prog.length < 2) return null;
-    const bas = CLAN_LABEL[prog[0]], haut = CLAN_LABEL[prog[prog.length - 1]];
-    // Version compressée : on ne cite que les deux extrémités, chaque
-    // caractère compte pour tenir sous la limite Discord.
     return compressed
-        ? `:heavy_check_mark: Progression ${bas} → ${haut}`
-        : `:heavy_check_mark: Une vraie progression **de ${bas} jusqu’à ${haut}**`;
+        ? `:heavy_check_mark: Progression Bronze → Gold`
+        : `:heavy_check_mark: Une vraie progression **de Bronze jusqu’à Gold**`;
 }
 
 // Assemble intro + clans + pied de page, en plaçant la coupure P1/P2 au milieu
@@ -767,6 +792,8 @@ function constructV2Text(isHtml) {
     let intro = `:dart: **[FR] L’Alliance UNION TEAM Recrute !** :dart:\n`;
     intro += `Tu veux un clan actif, organisé, avec une vraie bonne ambiance, des strats solides et une progression garantie ?\n`;
     intro += introSentence(false);
+    const ouverts = clansOuvertsPhrase(false);
+    if (ouverts) intro += `\n` + ouverts;
 
     const parts = {};
 
@@ -879,6 +906,8 @@ function constructCompressedText(withAnchors = false) {
     // Intro raccourcie
     let intro = `:dart: **[FR] UNION TEAM Recrute !** :dart:\n`;
     intro += `Clan actif, organisé, bonne ambiance, strats solides. ` + introSentence(true);
+    const ouverts = clansOuvertsPhrase(true);
+    if (ouverts) intro += `\n` + ouverts;
 
     const parts = {};
 
@@ -968,6 +997,7 @@ function switchPreviewMode(mode) {
     previewMode = mode;
     document.getElementById('previewTabNormal').classList.toggle('active', mode === 'normal');
     document.getElementById('previewTabCompressed').classList.toggle('active', mode === 'compressed');
+    document.getElementById('previewTabCompare').classList.toggle('active', mode === 'compare');
     build();
 }
 
@@ -1061,22 +1091,97 @@ function updatePreviewNotice() {
     }
 }
 
-function renderPreview(content) {
-    const emojiMap = { ":dart:":"🎯", ":fire:":"🔥", ":boom:":"💥", ":dragon:":"🐉", ":smiling_imp:":"😈", ":heavy_check_mark:":"✔️", ":pushpin:":"📌", ":crossed_swords:":"⚔️", ":third_place:":"🥉", ":punch:":"👊", ":gift:":"🎁", ":envelope_with_arrow:":"📩", ":muscle:":"💪" };
+const EMOJI_MAP = { ":dart:":"🎯", ":fire:":"🔥", ":boom:":"💥", ":dragon:":"🐉", ":smiling_imp:":"😈", ":heavy_check_mark:":"✔️", ":pushpin:":"📌", ":crossed_swords:":"⚔️", ":third_place:":"🥉", ":punch:":"👊", ":gift:":"🎁", ":envelope_with_arrow:":"📩", ":muscle:":"💪" };
+
+// Mise en forme façon Discord, extraite pour servir aussi à la comparaison.
+function formatDiscord(content) {
     let html = content.replace("%%%SPLIT%%%", "");
-    
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     html = html.replace(urlRegex, '<a href="$1" target="_blank" class="discord-link">$1</a>');
-
     html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/⸻/g, '<hr>');
-    for (const [code, icon] of Object.entries(emojiMap)) { html = html.split(code).join(icon); }
+    for (const [code, icon] of Object.entries(EMOJI_MAP)) { html = html.split(code).join(icon); }
+    return html;
+}
+
+function renderPreview(content) {
+    document.getElementById('visualPreview').innerHTML = formatDiscord(content);
+}
+
+// Comparaison ligne à ligne des deux versions (plus longue sous-suite commune).
+// Calculée sur les textes réels : une description écrite à la main finirait par
+// mentir dès qu'on touche à l'annonce.
+function diffLignes(completeTexte, courteTexte) {
+    const a = completeTexte.split('\n'), b = courteTexte.split('\n');
+    const n = a.length, m = b.length;
+    const dp = Array.from({ length: n + 1 }, () => new Uint16Array(m + 1));
+    for (let i = n - 1; i >= 0; i--) {
+        for (let j = m - 1; j >= 0; j--) {
+            dp[i][j] = (a[i] === b[j]) ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+        }
+    }
+    const sortie = [];
+    let i = 0, j = 0;
+    while (i < n && j < m) {
+        if (a[i] === b[j]) { sortie.push({ t: 'egal', l: a[i] }); i++; j++; }
+        else if (dp[i + 1][j] >= dp[i][j + 1]) { sortie.push({ t: 'retire', l: a[i] }); i++; }
+        else { sortie.push({ t: 'ajoute', l: b[j] }); j++; }
+    }
+    while (i < n) sortie.push({ t: 'retire', l: a[i++] });
+    while (j < m) sortie.push({ t: 'ajoute', l: b[j++] });
+    return sortie;
+}
+
+function renderCompare() {
+    const complete = constructV2Text(false).replace("%%%SPLIT%%%", "");
+    const courte = constructCompressedText(false);
+    const lignes = diffLignes(complete, courte);
+
+    // "retiré" et "raccourci" se comptent mal séparément : une ligne réécrite
+    // apparaît des deux côtés. On annonce donc l'écart, pas un décompte.
+    const touchees = lignes.filter(x => x.t === 'retire' && x.l.trim()).length;
+    const nbMessagesCourte = decouperPourDiscord(courte).length;
+    const nbMessages = decouperPourDiscord(constructV2Text(false)).length;
+    const msg = n => n > 1 ? `${n} messages` : `1 message`;
+
+    let html = `<div class="diff-summary">`
+        + `<div class="diff-sum-line">🟩 <b>Version courte</b> : ${courte.length} caractères, à coller en <b>${msg(nbMessagesCourte)}</b>.</div>`
+        + `<div class="diff-sum-line">🟦 <b>Annonce complète</b> : ${complete.length} caractères, à coller en <b>${msg(nbMessages)}</b>.</div>`
+        + `<div class="diff-sum-line diff-sum-note">${complete.length - courte.length} caractères d'écart : ${touchees} ligne${touchees > 1 ? 's' : ''} de l'annonce complète sont supprimées ou réécrites plus court.</div>`
+        + `<div class="diff-legend">`
+        + `<span class="diff-key retire">Absent de la version courte</span>`
+        + `<span class="diff-key ajoute">Ce que la version courte met à la place</span>`
+        + `</div></div>`;
+
+    html += '<div class="diff-body">';
+    lignes.forEach(x => {
+        if (!x.l.trim()) { html += '<div class="diff-vide"></div>'; return; }
+        const cls = x.t === 'egal' ? 'diff-egal' : (x.t === 'retire' ? 'diff-retire' : 'diff-ajoute');
+        html += `<div class="diff-ligne ${cls}">${formatDiscord(x.l)}</div>`;
+    });
+    html += '</div>';
+
+    html += `<div class="diff-actions">`
+        + `<button class="banner-btn primary" onclick="copyShort()">Copier la version courte</button>`
+        + `<button class="banner-btn" onclick="copyComplete()">Copier l'annonce complète</button>`
+        + `</div>`;
+
     document.getElementById('visualPreview').innerHTML = html;
+}
+
+// Depuis la comparaison, on choisit explicitement : le bouton bascule sur la
+// vue correspondante pour qu'on voie ce qu'on vient de mettre au presse-papier.
+function copyComplete() {
+    if (!requireClans()) return;
+    if (previewMode !== 'normal') switchPreviewMode('normal');
+    navigator.clipboard.writeText(constructV2Text(false).replace("%%%SPLIT%%%", ""));
+    showToast("Annonce complète copiée !");
 }
 
 function build() {
     // Le mode Manuel écrit du texte libre : les clans ne le pilotent pas.
-    // La vue compressée, elle, est toujours reconstruite depuis les champs.
-    const fieldBased = (previewMode === 'compressed') || (activeMode === 'auto');
+    // Les vues courte et comparée, elles, sont toujours reconstruites depuis
+    // les champs.
+    const fieldBased = (previewMode !== 'normal') || (activeMode === 'auto');
     if (fieldBased && clanCount() === 0) {
         document.getElementById('visualPreview').innerHTML =
             '<div class="preview-empty">Aucun clan n\'est inclus dans l\'annonce.<br>Réactive au moins un clan ci-contre pour générer le texte.</div>';
@@ -1086,6 +1191,29 @@ function build() {
         status.className = 'limit-bad';
         document.getElementById('copyBanner').hidden = true;
         document.getElementById('previewNotice').hidden = true;
+        saveData();
+        return;
+    }
+
+    // La comparaison n'est pas une version copiable : le choix se fait avec
+    // ses deux boutons, pas avec le bouton principal.
+    const boutonPrincipal = document.querySelector('.btn-main');
+    boutonPrincipal.disabled = (previewMode === 'compare');
+    boutonPrincipal.title = (previewMode === 'compare')
+        ? "Choisis une version dans la comparaison" : "";
+
+    if (previewMode === 'compare') {
+        renderCompare();
+        document.getElementById('copyBanner').hidden = true;
+        document.getElementById('previewNotice').hidden = true;
+        document.getElementById('counterLabel').innerHTML = 'Ce que la version courte retire de l’annonce complète';
+        document.getElementById('limitStatus').innerHTML = '';
+        document.getElementById('versionBadge').innerText = 'Comparaison';
+        ['previewFrame', 'charCounter'].forEach(id => {
+            const el = document.getElementById(id);
+            el.classList.remove('short', 'manual', 'full');
+        });
+        document.getElementById('frameFoot').innerText = '';
         saveData();
         return;
     }
