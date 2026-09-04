@@ -1460,12 +1460,12 @@ function showToast(m) { const t = document.getElementById('copy-toast'); t.inner
 // pour ça. Ce qu'on automatise ici, ce sont nos propres notes et nos propres
 // liens — jamais une action sur Discord, qui coûterait le compte.
 const SERVEURS_DEFAUT = [
-    { id: 's1', nom: 'Raid Shadow Legends – Francophone', url: 'https://discord.com/channels/407639414236381185/623497026532802560' },
-    { id: 's2', nom: 'Chazzup', url: 'https://discord.com/channels/754403793633935412/1048715083510980678' },
-    { id: 's3', nom: 'HellHades', url: 'https://discord.com/channels/649358411246469135/656732287269863434' },
-    { id: 's4', nom: 'Raid Shadow Legends – Officiel', url: 'https://discord.com/channels/532196192051003443/545977701471617027' },
-    { id: 's5', nom: 'ElPierro', url: 'https://discord.com/channels/800751593556672574/800810683691696178' },
-    { id: 's6', nom: 'La taverne du tavernain', url: 'https://discord.com/channels/841075314373033994/1096453082000412754' }
+    { id: 's1', nom: 'Raid Shadow Legends – Francophone', url: 'https://discord.com/channels/407639414236381185/623497026532802560', invitation: 'https://discord.gg/4Aw3HJzxgt' },
+    { id: 's2', nom: 'Chazzup', url: 'https://discord.com/channels/754403793633935412/1048715083510980678', invitation: 'https://discord.gg/CtdTRsNqcG' },
+    { id: 's3', nom: 'HellHades', url: 'https://discord.com/channels/649358411246469135/656732287269863434', invitation: 'https://discord.gg/Gjd342NgW5' },
+    { id: 's4', nom: 'Raid Shadow Legends – Officiel', url: 'https://discord.com/channels/532196192051003443/545977701471617027', invitation: 'https://discord.gg/raidshadowlegends' },
+    { id: 's5', nom: 'ElPierro', url: 'https://discord.com/channels/800751593556672574/800810683691696178', invitation: 'https://discord.gg/PYxDefSgVr' },
+    { id: 's6', nom: 'La taverne du tavernain', url: 'https://discord.com/channels/841075314373033994/1096453082000412754', invitation: 'https://discord.gg/GS8tk2cwce' }
 ];
 
 let serveurs = [];
@@ -1477,7 +1477,16 @@ function chargerServeurs() {
     }
     if (!Array.isArray(serveurs) || !serveurs.length) {
         serveurs = SERVEURS_DEFAUT.map(s => ({ ...s, version: 'courte', cooldown: 24, dernierPost: null }));
+        return;
     }
+    // Liste déjà enregistrée avant l'ajout des invitations : on complète celles
+    // qui manquent, sans toucher à ce que la personne a saisi elle-même.
+    let complete = false;
+    SERVEURS_DEFAUT.forEach(defaut => {
+        const s = serveurs.find(x => x.id === defaut.id);
+        if (s && !s.invitation && defaut.invitation) { s.invitation = defaut.invitation; complete = true; }
+    });
+    if (complete) sauverServeurs();
 }
 
 function sauverServeurs() { store.set('unionTeam_serveurs', JSON.stringify(serveurs)); }
