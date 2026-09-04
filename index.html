@@ -1171,14 +1171,15 @@ function constructCompressedText(withAnchors = false) {
 
     let t = assemble(intro, blocks, tail, false);
 
+    // Les adresses sont mises de côté avant toute coupe. Sans ça, la troncature
+    // finale tranchait au milieu du lien du formulaire : un candidat cliquait
+    // sur une adresse morte, ce qui est pire que pas d'adresse du tout.
+    let queue = '';
     if (document.getElementById('includeForm') && document.getElementById('includeForm').checked) {
-        t += `\n\n📝 Formulaire : ${FORM_LINK}`;
+        queue += `\n\n📝 Formulaire : ${FORM_LINK}`;
     }
-
-    // L'adresse de l'affiche est réservée hors budget : sinon la troncature
-    // finale la couperait en deux et l'image ne s'afficherait pas.
-    const suffixeAffiche = (modeAffiche === 'lien') ? `\n${afficheLien}` : '';
-    const limite = 2000 - suffixeAffiche.length;
+    if (modeAffiche === 'lien') queue += `\n${afficheLien}`;
+    const limite = 2000 - queue.length;
 
     // Réduction espaces superflus
     t = t.replace(/  +/g, ' ').replace(/\n{3,}/g, '\n\n');
@@ -1187,10 +1188,17 @@ function constructCompressedText(withAnchors = false) {
         t = t.replace(/\nplace\(s\)=[^\n]+\n/g, '\n');
         t = t.replace(/  +/g, ' ').replace(/\n{3,}/g, '\n\n');
     }
+    // Toujours trop long : on sacrifie les arguments de vente plutôt que la
+    // phrase d'appel. Couper à l'aveugle amputait "MP direct ou formulaire
+    // ci-dessous. On t'attend" en plein milieu — la ligne qui fait candidater.
+    if (t.length > limite) {
+        t = t.replace(/:gift:[\s\S]*?⸻\n\n/, '');
+        t = t.replace(/  +/g, ' ').replace(/\n{3,}/g, '\n\n');
+    }
     if (t.length > limite) {
         t = t.substring(0, limite - 3) + '...';
     }
-    return t + suffixeAffiche;
+    return t + queue;
 }
 
 function switchPreviewMode(mode) {
@@ -1548,8 +1556,11 @@ function showToast(m) { const t = document.getElementById('copy-toast'); t.inner
 // sur sa machine.
 const AFFICHE_URL = 'affiche.webp';
 // Adresse publique de l'affiche, celle qui part dans l'annonce en mode lien.
-// Modifiable : un autre hébergeur donne une adresse qui ne dit rien du dépôt.
-const AFFICHE_LIEN_DEFAUT = 'https://rogue06.github.io/rsl-unionteam/affiche.webp';
+// Hébergée sur postimg pour ne pas exposer le dépôt. Adresse du fichier et non
+// de la page : Discord n'affiche l'image que si l'adresse pointe dessus.
+// Repli si postimg venait à disparaître :
+// https://rogue06.github.io/rsl-unionteam/affiche.webp
+const AFFICHE_LIEN_DEFAUT = 'https://i.postimg.cc/x87Stc0s/Union-Team-logo.webp';
 let afficheLien = AFFICHE_LIEN_DEFAUT;
 // 'aucun' | 'lien' (une seule copie, adresse visible) | 'fichier' (deux collages, rien d'écrit)
 let modeAffiche = 'aucun';
