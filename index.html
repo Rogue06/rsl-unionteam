@@ -276,6 +276,12 @@
             border-radius: 4px; padding: 10px 12px; margin-bottom: 18px;
             font-size: 12px; color: #dcddde; line-height: 1.5;
         }
+        .affiche-bloc { background: #2b2d31; border: 1px solid #3f4147; border-radius: 8px; padding: 14px; margin-bottom: 18px; }
+        .affiche-titre { font-size: 12px; font-weight: 800; color: var(--warning); text-transform: uppercase; letter-spacing: 0.5px; }
+        .affiche-aide { margin: 8px 0 12px 0; font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+        .affiche-ctrl { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .affiche-ctrl select { background: #111214; border: 1px solid #1a1b1e; border-radius: 4px; color: #dbdee1; font-size: 11px; padding: 5px 6px; outline: none; }
+
         .serv-row { background: #2b2d31; border: 1px solid #3f4147; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; }
         .serv-row.pret { border-left: 3px solid var(--success); }
         .serv-row.attente { border-left: 3px solid var(--text-muted); }
@@ -418,6 +424,9 @@
             </button>
             
             <div class="dropdown-menu" id="exportMenu">
+                <button class="menu-item" onclick="copierAffiche()">
+                    🖼️ Copier l'affiche
+                </button>
                 <button class="menu-item" onclick="copyCompressed()">
                     📦 Copier la version courte
                 </button>
@@ -684,6 +693,26 @@
         <div class="tournee-note">
             Les liens n'ouvrent le bon salon que si <b>tu es déjà membre du serveur</b>. Sinon Discord
             affiche une page vide : rejoins-le une fois, le lien marchera ensuite.
+        </div>
+
+        <div class="affiche-bloc">
+            <div class="affiche-titre">🖼️ Affiche</div>
+            <p class="affiche-aide">
+                Pour joindre l'affiche : colle-la d'abord dans Discord (Ctrl+V), colle l'annonce
+                juste après, puis Entrée. <b>Les deux partent dans le même message.</b>
+            </p>
+            <div class="affiche-ctrl">
+                <button class="serv-go" onclick="copierAffiche()">Copier l'affiche</button>
+                <span class="serv-delai">
+                    <span class="serv-lab">taille</span>
+                    <select id="afficheTaille" onchange="changerTailleAffiche(this.value)">
+                        <option value="400">Petite</option>
+                        <option value="600" selected>Moyenne</option>
+                        <option value="900">Grande</option>
+                        <option value="1200">Maximale</option>
+                    </select>
+                </span>
+            </div>
         </div>
         <div id="serveursListe"></div>
         <div class="serv-add">
@@ -1458,6 +1487,63 @@ function copyFormLink() {
 
 function showToast(m) { const t = document.getElementById('copy-toast'); t.innerText = m; t.style.opacity = '1'; setTimeout(() => t.style.opacity = '0', 2000); }
 
+// --- AFFICHE ---
+// On copie l'image elle-même, pas son adresse : coller un lien afficherait
+// l'adresse du dépôt dans le message, lisible par tous les serveurs.
+// Elle est servie avec l'outil, donc chaque officier l'obtient sans l'avoir
+// sur sa machine.
+const AFFICHE_URL = 'affiche.webp';
+let affichePng = null;
+let afficheTaille = 600;
+
+// Discord réduit une image trop grande pour l'afficher, mais ne l'agrandit
+// jamais : la largeur de l'image collée commande donc sa taille dans le
+// message. C'est le seul levier, d'où ce réglage.
+async function preparerAffiche() {
+    if (affichePng) return affichePng;
+    const reponse = await fetch(AFFICHE_URL);
+    if (!reponse.ok) throw new Error('affiche introuvable');
+    const bitmap = await createImageBitmap(await reponse.blob());
+
+    const ratio = Math.min(1, afficheTaille / bitmap.width);
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(bitmap.width * ratio);
+    canvas.height = Math.round(bitmap.height * ratio);
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+
+    // Le presse-papier n'accepte de façon fiable que le PNG.
+    affichePng = await new Promise(r => canvas.toBlob(r, 'image/png'));
+    if (!affichePng) throw new Error('conversion impossible');
+    return affichePng;
+}
+
+function changerTailleAffiche(px) {
+    afficheTaille = parseInt(px, 10) || 600;
+    affichePng = null; // la taille a changé : l'image en cache ne vaut plus
+    store.set('unionTeam_afficheTaille', String(afficheTaille));
+}
+
+async function copierAffiche() {
+    if (!navigator.clipboard || !window.ClipboardItem) return replierSurOnglet();
+    try {
+        // Safari veut la promesse, pas le blob déjà résolu : sinon il considère
+        // que la copie ne vient plus du clic.
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': preparerAffiche() })]);
+        showToast("Affiche copiée — colle-la dans Discord, puis colle l'annonce");
+    } catch (e) {
+        replierSurOnglet();
+    }
+}
+
+// Firefox ne sait pas déposer une image dans le presse-papier : on ouvre
+// l'affiche, la personne fait clic droit puis "Copier l'image".
+function replierSurOnglet() {
+    window.open(AFFICHE_URL, '_blank');
+    showToast("Ton navigateur ne copie pas les images : clic droit sur l'affiche → Copier l'image");
+}
+
 // --- TOURNÉE DE PUBLICATION ---
 // Poster à la main dans ces salons est parfaitement autorisé : ils sont faits
 // pour ça. Ce qu'on automatise ici, ce sont nos propres notes et nos propres
@@ -1760,6 +1846,12 @@ window.onload = () => {
     }
 
     chargerServeurs();
+    const tailleSauvee = store.get('unionTeam_afficheTaille');
+    if (tailleSauvee) {
+        afficheTaille = parseInt(tailleSauvee, 10) || 600;
+        const sel = document.getElementById('afficheTaille');
+        if (sel) sel.value = String(afficheTaille);
+    }
     applyClanUI();
     build();
 };
