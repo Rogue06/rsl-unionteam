@@ -131,10 +131,14 @@
         .clan-chip .chip-check { font-size: 10px; opacity: 0.35; }
         .clan-chip.on { background: rgba(88, 101, 242, 0.12); border-color: currentColor; }
         .clan-chip.on .chip-check { opacity: 1; }
+        /* Couleurs reprises des rôles Discord, pour que les habitués
+           reconnaissent un clan à sa teinte sans lire le nom. */
         .clan-chip.on[data-clan="gold"] { color: #f0b232; }
-        .clan-chip.on[data-clan="silver"] { color: #b9bbbe; }
-        .clan-chip.on[data-clan="savage"] { color: #f23f43; }
-        .clan-chip.on[data-clan="bronze"] { color: #cd7f32; }
+        .clan-chip.on[data-clan="silver"] { color: #c4c9ce; }
+        /* Bleu Discord éclairci : la teinte du rôle est trop sombre sur le
+           fond des pastilles pour rester lisible. */
+        .clan-chip.on[data-clan="savage"] { color: #5b74e8; }
+        .clan-chip.on[data-clan="bronze"] { color: #c87f3a; }
 
         /* CARTE CLAN : en-tete + etat retire */
         .card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 15px; }
