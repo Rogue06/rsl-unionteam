@@ -105,7 +105,48 @@
 
         .module-card { background: #2b2d31; border-radius: 8px; padding: 20px; margin-bottom: 25px; border: 1px solid #3f4147; transition: 0.2s; }
         .module-card:focus-within { border-color: var(--accent); }
-        .module-card h3 { margin: 0 0 15px 0; font-size: 12px; color: var(--warning); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 800; }
+        .module-card h3 { margin: 0; font-size: 12px; color: var(--warning); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 800; }
+
+        /* BARRE DE SELECTION DES CLANS */
+        .clan-bar {
+            background: linear-gradient(90deg, #2b2d31 0%, #202225 100%); border: 1px solid #3f4147;
+            border-radius: 8px; padding: 12px 15px; margin-bottom: 25px; transition: 0.2s;
+        }
+        .clan-bar.empty { border-color: var(--danger); }
+        .clan-bar-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+        .clan-bar-label { font-size: 12px; font-weight: 700; color: white; display: flex; align-items: center; gap: 8px; }
+        .clan-bar-actions { display: flex; align-items: center; gap: 12px; }
+        .clan-bar-count { font-size: 11px; font-weight: 700; color: var(--text-muted); }
+        .clan-bar.empty .clan-bar-count { color: var(--danger); }
+        .link-btn { background: none; border: none; color: var(--text-muted); font-size: 11px; font-weight: 600; cursor: pointer; padding: 2px 4px; text-decoration: underline; }
+        .link-btn:hover { color: white; }
+
+        .clan-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+        .clan-chip {
+            display: flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 20px;
+            border: 1px solid #3f4147; background: #111214; color: var(--text-muted);
+            font-size: 12px; font-weight: 700; cursor: pointer; transition: 0.15s;
+        }
+        .clan-chip:hover { border-color: var(--text-muted); color: white; }
+        .clan-chip .chip-check { font-size: 10px; opacity: 0.35; }
+        .clan-chip.on { background: rgba(88, 101, 242, 0.12); border-color: currentColor; }
+        .clan-chip.on .chip-check { opacity: 1; }
+        .clan-chip.on[data-clan="gold"] { color: #f0b232; }
+        .clan-chip.on[data-clan="silver"] { color: #b9bbbe; }
+        .clan-chip.on[data-clan="savage"] { color: #f23f43; }
+        .clan-chip.on[data-clan="bronze"] { color: #cd7f32; }
+
+        /* CARTE CLAN : en-tete + etat retire */
+        .card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 15px; }
+        .card-head-right { display: flex; align-items: center; gap: 10px; }
+        .card-state { font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .module-card.off { opacity: 0.6; border-style: dashed; }
+        .module-card.off h3 { color: var(--text-muted); }
+        .module-card.off .card-body { display: none; }
+        .card-off-hint { display: none; font-size: 12px; color: var(--text-muted); font-style: italic; }
+        .module-card.off .card-off-hint { display: block; }
+
+        .preview-empty { color: var(--text-muted); font-style: italic; padding: 20px 0; line-height: 1.6; }
 
         .notes-container { background: #111214; border: 1px solid #1a1b1e; border-radius: 8px; display: flex; flex-direction: column; width: 100%; box-sizing: border-box; max-height: 450px; }
         .notes-toolbar { background: #1e1f22; padding: 8px; border-bottom: 1px solid #1a1b1e; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; position: sticky; top: 0; z-index: 5; }
@@ -221,6 +262,22 @@
         </div>
 
         <div id="autoContainer">
+            <div class="clan-bar" id="clanBar">
+                <div class="clan-bar-head">
+                    <div class="clan-bar-label"><span>🎯 Clans dans l'annonce</span></div>
+                    <div class="clan-bar-actions">
+                        <button class="link-btn" onclick="setAllClans(true)">Tout inclure</button>
+                        <span class="clan-bar-count" id="clanCount">4 / 4</span>
+                    </div>
+                </div>
+                <div class="clan-chips">
+                    <button class="clan-chip" data-clan="gold" id="chip_gold" onclick="toggleClan('gold')"><span class="chip-check">✔</span> 🔥 Gold</button>
+                    <button class="clan-chip" data-clan="silver" id="chip_silver" onclick="toggleClan('silver')"><span class="chip-check">✔</span> ⚔️ Silver</button>
+                    <button class="clan-chip" data-clan="savage" id="chip_savage" onclick="toggleClan('savage')"><span class="chip-check">✔</span> 🔥 Savage</button>
+                    <button class="clan-chip" data-clan="bronze" id="chip_bronze" onclick="toggleClan('bronze')"><span class="chip-check">✔</span> 🥉 Bronze</button>
+                </div>
+            </div>
+
             <div class="global-options">
                 <div class="option-label">
                     <span>📝 Inclure le Formulaire</span>
@@ -231,8 +288,19 @@
                 </label>
             </div>
 
-            <div class="module-card" onfocusin="syncFocus('preview_gold')">
-                <h3>🔥 UNION TEAM GOLD</h3>
+            <div class="module-card" id="card_gold" onfocusin="syncFocus('preview_gold')">
+                <div class="card-head">
+                    <h3>🔥 UNION TEAM GOLD</h3>
+                    <div class="card-head-right">
+                        <span class="card-state" id="state_gold">Dans l'annonce</span>
+                        <label class="switch">
+                            <input type="checkbox" id="tg_gold" checked onchange="setClan('gold', this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+                <div class="card-off-hint">Clan retiré de l'annonce. Les valeurs sont conservées.</div>
+                <div class="card-body">
                 <div class="grid-inputs">
                     <div class="field"><label>BDC</label><input type="text" id="g_bdc" value="UNM / NM / Brutal" data-default="UNM / NM / Brutal"></div>
                     <div class="field"><label>Hydre</label><input type="text" id="g_hy" value="Normal / Difficile / Brutal / Cauchemar" data-default="Normal / Difficile / Brutal / Cauchemar"></div>
@@ -242,10 +310,22 @@
                     <div class="field"><label>Clash Chimère</label><input type="text" id="g_cch" value="500M" data-default="500M"></div>
                     <div class="field"><label>Places</label><input type="text" id="g_pl" value="à déterminer" data-default="à déterminer"></div>
                 </div>
+                </div>
             </div>
 
-            <div class="module-card" onfocusin="syncFocus('preview_silver')">
-                <h3>⚔️ UNION TEAM SILVER</h3>
+            <div class="module-card" id="card_silver" onfocusin="syncFocus('preview_silver')">
+                <div class="card-head">
+                    <h3>⚔️ UNION TEAM SILVER</h3>
+                    <div class="card-head-right">
+                        <span class="card-state" id="state_silver">Dans l'annonce</span>
+                        <label class="switch">
+                            <input type="checkbox" id="tg_silver" checked onchange="setClan('silver', this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+                <div class="card-off-hint">Clan retiré de l'annonce. Les valeurs sont conservées.</div>
+                <div class="card-body">
                 <div class="grid-inputs">
                     <div class="field"><label>BDC</label><input type="text" id="s_bdc" value="UNM & NM" data-default="UNM & NM"></div>
                     <div class="field"><label>Hydre</label><input type="text" id="s_hy" value="Normal / Difficile / Brutal" data-default="Normal / Difficile / Brutal"></div>
@@ -254,10 +334,22 @@
                     <div class="field"><label>Clash Hydre</label><input type="text" id="s_chy" value="50M" data-default="50M"></div>
                     <div class="field"><label>Places</label><input type="text" id="s_pl" value="à déterminer" data-default="à déterminer"></div>
                 </div>
+                </div>
             </div>
 
-            <div class="module-card" onfocusin="syncFocus('preview_savage')">
-                <h3>🔥 UNION TEAM SAVAGE</h3>
+            <div class="module-card" id="card_savage" onfocusin="syncFocus('preview_savage')">
+                <div class="card-head">
+                    <h3>🔥 UNION TEAM SAVAGE</h3>
+                    <div class="card-head-right">
+                        <span class="card-state" id="state_savage">Dans l'annonce</span>
+                        <label class="switch">
+                            <input type="checkbox" id="tg_savage" checked onchange="setClan('savage', this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+                <div class="card-off-hint">Clan retiré de l'annonce. Les valeurs sont conservées.</div>
+                <div class="card-body">
                 <div class="grid-inputs">
                     <div class="field"><label>BDC</label><input type="text" id="sv_bdc" value="UNM / NM" data-default="UNM / NM"></div>
                     <div class="field"><label>Hydre</label><input type="text" id="sv_hy" value="Normal / Difficile / Brutal / Cauchemar" data-default="Normal / Difficile / Brutal / Cauchemar"></div>
@@ -267,18 +359,31 @@
                     <div class="field"><label>Clash Chimère</label><input type="text" id="sv_cch" value="100M" data-default="100M"></div>
                     <div class="field"><label>Places</label><input type="text" id="sv_pl" value="2 à 3 places dispo" data-default="2 à 3 places dispo"></div>
                 </div>
+                </div>
             </div>
 
-            <div class="module-card" onfocusin="syncFocus('preview_bronze')">
-                <h3>🥉 UNION TEAM BRONZE</h3>
+            <div class="module-card" id="card_bronze" onfocusin="syncFocus('preview_bronze')">
+                <div class="card-head">
+                    <h3>🥉 UNION TEAM BRONZE</h3>
+                    <div class="card-head-right">
+                        <span class="card-state" id="state_bronze">Dans l'annonce</span>
+                        <label class="switch">
+                            <input type="checkbox" id="tg_bronze" checked onchange="setClan('bronze', this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+                <div class="card-off-hint">Clan retiré de l'annonce. Les valeurs sont conservées.</div>
+                <div class="card-body">
                 <div class="grid-inputs">
                     <div class="field"><label>BDC</label><input type="text" id="b_bdc" value="UNM, NM & Brutal" data-default="UNM, NM & Brutal"></div>
                     <div class="field"><label>Hydre</label><input type="text" id="b_hy" value="Normal tombe" data-default="Normal tombe"></div>
                     <div class="field"><label>CvC</label><input type="text" id="b_cvc" value="40k RP / 20k NRP" data-default="40k RP / 20k NRP"></div>
                     <div class="field"><label>Places</label><input type="text" id="b_pl" value="2 places dispo !" data-default="2 places dispo !"></div>
                 </div>
+                </div>
             </div>
-            
+
             <button class="btn-gray" onclick="confirmReset()" style="width:100%">🔄 Reset des Champs</button>
         </div>
 
@@ -326,6 +431,10 @@
     </div>
     <div class="panel-content" id="contentGuide">
         <div class="help-item">
+            <h4>🎯 Clans dans l'annonce</h4>
+            <p>Un clan est complet ? Clique sur sa pastille en haut à gauche (ou sur l'interrupteur de sa carte) pour le <b>retirer de l'annonce</b>. Ses valeurs sont conservées : re-clique pour le remettre quand il recrute à nouveau. L'intro, la phrase de progression et la découpe P1/P2 s'ajustent automatiquement aux clans restants.</p>
+        </div>
+        <div class="help-item">
             <h4>🚀 Export Rapide</h4>
             <p>Utilisez le bouton principal "Copier" pour l'action par défaut. Cliquez sur la flèche <b>▼</b> pour accéder au lien du formulaire, au code Discord brut, à la <b>version compressée</b> (≤2000 car.) ou aux parties découpées (P1/P2).</p>
         </div>
@@ -339,6 +448,14 @@
         </div>
     </div>
     <div class="panel-content" id="contentChangelog" style="display:none">
+        <div class="changelog-entry" style="border-left: 2px solid var(--accent); padding-left: 15px; margin-bottom: 15px;">
+            <span style="font-weight:bold; color:white;">Version 5.0 - Clans à la carte</span>
+            <ul style="margin:5px 0 0 15px; padding:0; font-size:13px; color:#dbdee1;">
+                <li>🎯 <b>Clans optionnels</b> : retire un clan complet de l'annonce en un clic, remets-le quand tu veux.</li>
+                <li>✍️ <b>Texte adaptatif</b> : intro, progression et coupure P1/P2 suivent les clans restants.</li>
+                <li>💾 <b>Mémorisé</b> : la sélection est conservée d'une session à l'autre.</li>
+            </ul>
+        </div>
         <div class="changelog-entry" style="border-left: 2px solid var(--accent); padding-left: 15px; margin-bottom: 15px;">
             <span style="font-weight:bold; color:white;">Version 4.1 - Version compressée</span>
             <ul style="margin:5px 0 0 15px; padding:0; font-size:13px; color:#dbdee1;">
@@ -365,6 +482,72 @@ let activeMode = 'auto';
 let activeFieldId = null;
 let previewMode = 'normal'; // 'normal' | 'compressed'
 const FORM_LINK = "https://docs.google.com/forms/d/1Vx_8eLWIidDnvF1SZuq5bvGnPB-9PaIDtfAYYc9VOBg/viewform";
+
+// Certains navigateurs (navigation privée stricte, cookies tiers coupés)
+// interdisent localStorage et faisaient planter toute la page : sans ce
+// garde-fou, la première sauvegarde levait une exception et la prévisualisation
+// restait vide. Ici on perd juste la mémorisation, l'outil continue de marcher.
+const store = {
+    get(key) { try { return localStorage.getItem(key); } catch (e) { return null; } },
+    set(key, value) { try { localStorage.setItem(key, value); } catch (e) { /* stockage indisponible */ } }
+};
+
+// --- CLANS INCLUS DANS L'ANNONCE ---
+// Un clan complet se retire de l'annonce sans perdre ses valeurs : on coupe
+// uniquement à la génération du texte, les champs restent en mémoire.
+let activeClans = { gold: true, silver: true, savage: true, bronze: true };
+
+// Ordre d'affichage dans l'annonce (le plus fort d'abord)
+const CLAN_ORDER = ['gold', 'silver', 'savage', 'bronze'];
+// Ordre de progression, celui qu'on cite dans les phrases "Bronze → Gold"
+const CLAN_PROGRESSION = ['bronze', 'savage', 'silver', 'gold'];
+const CLAN_LABEL = { gold: 'Gold', silver: 'Silver', savage: 'Savage', bronze: 'Bronze' };
+
+function clansIn(order) { return order.filter(k => activeClans[k]); }
+function clanCount() { return clansIn(CLAN_ORDER).length; }
+
+function setClan(key, on) {
+    activeClans[key] = !!on;
+    applyClanUI();
+    build();
+}
+
+function toggleClan(key) { setClan(key, !activeClans[key]); }
+
+function setAllClans(on) {
+    CLAN_ORDER.forEach(k => activeClans[k] = !!on);
+    applyClanUI();
+    build();
+}
+
+// Synchronise les pastilles du haut, les interrupteurs des cartes et le compteur
+function applyClanUI() {
+    CLAN_ORDER.forEach(k => {
+        const on = activeClans[k];
+        const chip = document.getElementById('chip_' + k);
+        const card = document.getElementById('card_' + k);
+        const toggle = document.getElementById('tg_' + k);
+        const state = document.getElementById('state_' + k);
+        if (chip) chip.classList.toggle('on', on);
+        if (card) card.classList.toggle('off', !on);
+        if (toggle) toggle.checked = on;
+        if (state) state.innerText = on ? "Dans l'annonce" : "Retiré";
+    });
+    const n = clanCount();
+    const count = document.getElementById('clanCount');
+    if (count) count.innerText = n + ' / ' + CLAN_ORDER.length;
+    const bar = document.getElementById('clanBar');
+    if (bar) bar.classList.toggle('empty', n === 0);
+}
+
+// Bloque les copies quand plus aucun clan n'est sélectionné
+function requireClans() {
+    if (clanCount() === 0) {
+        showToast("Aucun clan dans l'annonce !");
+        return false;
+    }
+    return true;
+}
 
 // --- UI LOGIC (Dropdowns & Panel) ---
 function toggleMenu() {
@@ -420,76 +603,140 @@ function renderFromManual() {
 }
 
 // --- GENERATION DU TEXTE ---
+const SEP = `\n\n⸻\n\n`;
+const SPLIT_SEP = `\n\n%%%SPLIT%%%\n⸻\n\n`;
+
+// Phrase d'intro : elle annonce le nombre exact de clans ouverts et leur
+// progression, sinon on promet "4 clans" alors qu'on n'en affiche que deux.
+function introSentence(compressed) {
+    const prog = clansIn(CLAN_PROGRESSION);
+    const chain = prog.map(k => CLAN_LABEL[k]).join(' → ');
+    if (prog.length === 1) {
+        const solo = CLAN_LABEL[prog[0]].toUpperCase();
+        return compressed
+            ? `Recrutement **UNION TEAM ${solo}**.`
+            : `Nous recrutons actuellement pour **UNION TEAM ${solo}**.`;
+    }
+    return compressed
+        ? `${prog.length} clans : ${chain}, évolution selon ton niveau.`
+        : `Notre Union possède **${prog.length} clans : ${chain}**, ce qui te permet d’évoluer naturellement selon ton niveau et ton engagement.`;
+}
+
+// "Motivation pour monter vers Silver, puis Gold" : on ne cite que les clans
+// encore ouverts, sinon on envoie le candidat vers un clan complet.
+function bronzeMotivation(compressed) {
+    const higher = ['silver', 'gold'].filter(k => activeClans[k]);
+    const prefix = compressed ? `• Monter vers ` : `• Motivation pour monter vers `;
+    if (higher.length === 2) return prefix + `**Silver**, puis **Gold**`;
+    if (higher.length === 1) return prefix + `**${CLAN_LABEL[higher[0]]}**`;
+    if (activeClans.savage) return prefix + `**Savage**`;
+    return compressed ? `• Envie de progresser` : `• Motivation et envie de progresser`;
+}
+
+// Ligne de progression du bloc "Pourquoi nous rejoindre" (omise s'il ne reste
+// qu'un seul clan : il n'y a plus de progression à annoncer).
+function progressionLine(compressed) {
+    const prog = clansIn(CLAN_PROGRESSION);
+    if (prog.length < 2) return null;
+    const bas = CLAN_LABEL[prog[0]], haut = CLAN_LABEL[prog[prog.length - 1]];
+    // Version compressée : on ne cite que les deux extrémités, chaque
+    // caractère compte pour tenir sous la limite Discord.
+    return compressed
+        ? `:heavy_check_mark: Progression ${bas} → ${haut}`
+        : `:heavy_check_mark: Une vraie progression **de ${bas} jusqu’à ${haut}**`;
+}
+
+// Assemble intro + clans + pied de page, en plaçant la coupure P1/P2 au milieu
+// des clans réellement présents.
+function assemble(intro, blocks, tail, withSplit) {
+    // null et pas -1 : sinon la valeur se confond avec l'index "avant le
+    // premier bloc" et la coupure atterrit juste après l'intro.
+    const splitAt = (withSplit && blocks.length > 1) ? Math.ceil(blocks.length / 2) - 1 : null;
+    let t = intro;
+    blocks.forEach((block, i) => {
+        t += (i - 1 === splitAt) ? SPLIT_SEP : SEP;
+        t += block;
+    });
+    t += (blocks.length - 1 === splitAt) ? SPLIT_SEP : SEP;
+    return t + tail;
+}
+
 function constructV2Text(isHtml) {
-    let t = `:dart: **[FR] L’Alliance UNION TEAM Recrute !** :dart:\n`;
-    t += `Tu veux un clan actif, organisé, avec une vraie bonne ambiance, des strats solides et une progression garantie ?\n`;
-    t += `Notre Union possède **4 clans : Bronze → Savage → Silver → Gold**, ce qui te permet d’évoluer naturellement selon ton niveau et ton engagement.\n\n⸻\n\n`;
+    const anc = (id) => isHtml ? `<span id="${id}" class="scroll-anchor"></span>` : '';
+    const v = (id) => getVal(id, isHtml);
 
-    // GOLD
-    if(isHtml) t += `<span id="preview_gold" class="scroll-anchor"></span>`;
-    t += `:fire:** UNION TEAM GOLD (Top niveau)**\n\n`;
-    t += `:boom: BDC : ${getVal('g_bdc', isHtml)} → tombent tous les jours\n`;
-    t += `:dragon: **Hydre** : ${getVal('g_hy', isHtml)} → tout tombe\n`;
-    t += `:smiling_imp:** Chimère** : ${getVal('g_ch', isHtml)}\n\n`;
-    t += `:heavy_check_mark: **Exigences :**\n\n`;
-    t += `• Frapper **BDC UNM**\n`;
-    t += `• **${getVal('g_cvc', isHtml)}** en CvC\n`;
-    t += `• Quotas minimum Clash Hydre **${getVal('g_chy', isHtml)}** \n`;
-    t += `• Quotas minimum Clash Chimère **${getVal('g_cch', isHtml)}** \n`;
-    t += `• Activité Discord\n`;
-    t += `:dart:** Ambiance chill + performance + bienveillance**\n`;
-    t += `:pushpin: ** Place(s) disponible(s) **: ${getVal('g_pl', isHtml)}\n\n⸻\n\n`;
+    let intro = `:dart: **[FR] L’Alliance UNION TEAM Recrute !** :dart:\n`;
+    intro += `Tu veux un clan actif, organisé, avec une vraie bonne ambiance, des strats solides et une progression garantie ?\n`;
+    intro += introSentence(false);
 
-    // SILVER
-    if(isHtml) t += `<span id="preview_silver" class="scroll-anchor"></span>`;
-    t += `:crossed_swords: **UNION TEAM SILVER (Intermédiaire)**\n\n`;
-    t += `:boom: **BDC** : ${getVal('s_bdc', isHtml)} → tombent tous les jours\n`;
-    t += `:dragon: **Hydre** : ${getVal('s_hy', isHtml)}\n`;
-    t += `:smiling_imp: **Chimère** : ${getVal('s_ch', isHtml)}\n\n`;
-    t += `:heavy_check_mark: **Exigences** :\n\n`;
-    t += `• Frapper** BDC UNM**\n`;
-    t += `• **${getVal('s_cvc', isHtml)}** en CvC\n`;
-    t += `• Quotas minimum Clash Hydre **${getVal('s_chy', isHtml)}** \n`;
-    t += `• Présence Discord\n`;
-    t += `:pushpin: ** Place(s) disponible(s) **: ${getVal('s_pl', isHtml)}\n\n`;
-    
-    if(!isHtml) t += "%%%SPLIT%%%"; 
-    t += `\n⸻\n\n`;
+    const parts = {};
 
-    // SAVAGE
-    if(isHtml) t += `<span id="preview_savage" class="scroll-anchor"></span>`;
-    t += `:fire:** UNION TEAM SAVAGE **\n\n`;
-    t += `:boom: **BDC** : ${getVal('sv_bdc', isHtml)} → tombent tous les jours\n`;
-    t += `:dragon: **Hydre** : ${getVal('sv_hy', isHtml)} → tout tombe\n`;
-    t += `:smiling_imp:** Chimère** : ${getVal('sv_ch', isHtml)} \n\n`;
-    t += `:heavy_check_mark: **Exigences :**\n\n`;
-    t += `• Puissance mini : 2M\n`;
-    t += `• Frapper **BDC UNM & NM**\n`;
-    t += `• **${getVal('sv_cvc', isHtml)}** en CvC\n`;
-    t += `• Quotas minimum Clash Hydre **${getVal('sv_chy', isHtml)}** \n`;
-    t += `• Quotas minimum Clash Chimère **${getVal('sv_cch', isHtml)}** \n`;
-    t += `• Activité Discord\n`;
-    t += `:dart:** Ambiance chill + performance + bienveillance**\n`;
-    t += `:pushpin: ** Place(s) disponible(s) **: ${getVal('sv_pl', isHtml)}\n\n⸻\n\n`;
+    parts.gold = anc('preview_gold')
+        + `:fire:** UNION TEAM GOLD (Top niveau)**\n\n`
+        + `:boom: BDC : ${v('g_bdc')} → tombent tous les jours\n`
+        + `:dragon: **Hydre** : ${v('g_hy')} → tout tombe\n`
+        + `:smiling_imp:** Chimère** : ${v('g_ch')}\n\n`
+        + `:heavy_check_mark: **Exigences :**\n\n`
+        + `• Frapper **BDC UNM**\n`
+        + `• **${v('g_cvc')}** en CvC\n`
+        + `• Quotas minimum Clash Hydre **${v('g_chy')}** \n`
+        + `• Quotas minimum Clash Chimère **${v('g_cch')}** \n`
+        + `• Activité Discord\n`
+        + `:dart:** Ambiance chill + performance + bienveillance**\n`
+        + `:pushpin: ** Place(s) disponible(s) **: ${v('g_pl')}`;
 
-    // BRONZE
-    if(isHtml) t += `<span id="preview_bronze" class="scroll-anchor"></span>`;
-    t += `:third_place:** UNION TEAM BRONZE (Progression)**\n\n`;
-    t += `:boom: **BDC** : ${getVal('b_bdc', isHtml)} → tombent chaque jour\n`;
-    t += `:punch: **Objectif** : faire tomber l’UNM ensemble !\n`;
-    t += `:dragon: **Hydre** : ${getVal('b_hy', isHtml)}\n\n`;
-    t += `:heavy_check_mark: **Exigences :**\n\n`;
-    t += `• Frapper **BDC UNM**\n`;
-    t += `• **${getVal('b_cvc', isHtml)}** en CvC\n`;
-    t += `• Motivation pour monter vers **Silver**, puis **Gold**\n`;
-    t += `:pushpin: **${getVal('b_pl', isHtml)}**\n\n⸻\n\n`;
+    parts.silver = anc('preview_silver')
+        + `:crossed_swords: **UNION TEAM SILVER (Intermédiaire)**\n\n`
+        + `:boom: **BDC** : ${v('s_bdc')} → tombent tous les jours\n`
+        + `:dragon: **Hydre** : ${v('s_hy')}\n`
+        + `:smiling_imp: **Chimère** : ${v('s_ch')}\n\n`
+        + `:heavy_check_mark: **Exigences** :\n\n`
+        + `• Frapper** BDC UNM**\n`
+        + `• **${v('s_cvc')}** en CvC\n`
+        + `• Quotas minimum Clash Hydre **${v('s_chy')}** \n`
+        + `• Présence Discord\n`
+        + `:pushpin: ** Place(s) disponible(s) **: ${v('s_pl')}`;
 
-    t += `:gift: **Pourquoi nous rejoindre ?**\n\n`;
-    t += `:heavy_check_mark: Une** communauté soudée**, mature et engagée\n`;
-    t += `:heavy_check_mark: Des **strats partagées** en permanence\n`;
-    t += `:heavy_check_mark: Un **Discord actif** : guides, coaching, aide, fun\n`;
-    t += `:heavy_check_mark: Une vraie progression **de Bronze jusqu’à Gold**\n\n⸻\n\n`;
-    t += `:envelope_with_arrow:** Intéressé(e) ?**\nMP direct pour candidater ou poser tes questions.\nOn a hâte de t’accueillir dans l’Union Team :muscle:`;
+    parts.savage = anc('preview_savage')
+        + `:fire:** UNION TEAM SAVAGE **\n\n`
+        + `:boom: **BDC** : ${v('sv_bdc')} → tombent tous les jours\n`
+        + `:dragon: **Hydre** : ${v('sv_hy')} → tout tombe\n`
+        + `:smiling_imp:** Chimère** : ${v('sv_ch')} \n\n`
+        + `:heavy_check_mark: **Exigences :**\n\n`
+        + `• Puissance mini : 2M\n`
+        + `• Frapper **BDC UNM & NM**\n`
+        + `• **${v('sv_cvc')}** en CvC\n`
+        + `• Quotas minimum Clash Hydre **${v('sv_chy')}** \n`
+        + `• Quotas minimum Clash Chimère **${v('sv_cch')}** \n`
+        + `• Activité Discord\n`
+        + `:dart:** Ambiance chill + performance + bienveillance**\n`
+        + `:pushpin: ** Place(s) disponible(s) **: ${v('sv_pl')}`;
+
+    parts.bronze = anc('preview_bronze')
+        + `:third_place:** UNION TEAM BRONZE (Progression)**\n\n`
+        + `:boom: **BDC** : ${v('b_bdc')} → tombent chaque jour\n`
+        + `:punch: **Objectif** : faire tomber l’UNM ensemble !\n`
+        + `:dragon: **Hydre** : ${v('b_hy')}\n\n`
+        + `:heavy_check_mark: **Exigences :**\n\n`
+        + `• Frapper **BDC UNM**\n`
+        + `• **${v('b_cvc')}** en CvC\n`
+        + bronzeMotivation(false) + `\n`
+        + `:pushpin: **${v('b_pl')}**`;
+
+    const blocks = clansIn(CLAN_ORDER).map(k => parts[k]);
+
+    const why = [
+        `:gift: **Pourquoi nous rejoindre ?**\n`,
+        `:heavy_check_mark: Une** communauté soudée**, mature et engagée`,
+        `:heavy_check_mark: Des **strats partagées** en permanence`,
+        `:heavy_check_mark: Un **Discord actif** : guides, coaching, aide, fun`,
+        progressionLine(false)
+    ].filter(Boolean).join('\n');
+
+    let tail = why + SEP;
+    tail += `:envelope_with_arrow:** Intéressé(e) ?**\nMP direct pour candidater ou poser tes questions.\nOn a hâte de t’accueillir dans l’Union Team :muscle:`;
+
+    let t = assemble(intro, blocks, tail, !isHtml);
 
     // GESTION DU FORMULAIRE
     const includeForm = document.getElementById('includeForm');
@@ -529,65 +776,75 @@ function constructCompressedText(withAnchors = false) {
     const anc = (id) => withAnchors ? `<span id="${id}" class="scroll-anchor"></span>` : '';
     const val = (id) => withAnchors ? getVal(id, true) : getValRaw(id);
     // Intro raccourcie
-    let t = `:dart: **[FR] UNION TEAM Recrute !** :dart:\n`;
-    t += `Clan actif, organisé, bonne ambiance, strats solides. 4 clans : Bronze → Savage → Silver → Gold, évolution selon ton niveau.\n\n⸻\n\n`;
+    let intro = `:dart: **[FR] UNION TEAM Recrute !** :dart:\n`;
+    intro += `Clan actif, organisé, bonne ambiance, strats solides. ` + introSentence(true);
+
+    const parts = {};
 
     // GOLD - sans Frapper, Quotas minimum, Activité, Ambiance
-    t += anc('preview_gold') + `:fire:** UNION TEAM GOLD (Top niveau)**\n\n`;
-    t += `:boom: BDC : ${val('g_bdc')} → tombent tous les jours\n`;
-    t += `:dragon: **Hydre** : ${val('g_hy')} → tout tombe\n`;
-    t += `:smiling_imp:** Chimère** : ${val('g_ch')}\n\n`;
-    t += `:heavy_check_mark: **Exigences :**\n\n`;
-    t += `• **BDC UNM**\n`;
-    t += `• **${val('g_cvc')}** en CvC\n`;
-    t += `• Clash Hydre **${val('g_chy')}**\n`;
-    t += `• Clash Chimère **${val('g_cch')}**\n`;
-    t += `• Discord\n`;
-    t += `place(s)=${getPlaceCompact(getValRaw('g_pl'))}\n\n⸻\n\n`;
+    parts.gold = anc('preview_gold') + `:fire:** UNION TEAM GOLD (Top niveau)**\n\n`
+        + `:boom: BDC : ${val('g_bdc')} → tombent tous les jours\n`
+        + `:dragon: **Hydre** : ${val('g_hy')} → tout tombe\n`
+        + `:smiling_imp:** Chimère** : ${val('g_ch')}\n\n`
+        + `:heavy_check_mark: **Exigences :**\n\n`
+        + `• **BDC UNM**\n`
+        + `• **${val('g_cvc')}** en CvC\n`
+        + `• Clash Hydre **${val('g_chy')}**\n`
+        + `• Clash Chimère **${val('g_cch')}**\n`
+        + `• Discord\n`
+        + `place(s)=${getPlaceCompact(getValRaw('g_pl'))}`;
 
     // SILVER
-    t += anc('preview_silver') + `:crossed_swords: **UNION TEAM SILVER (Intermédiaire)**\n\n`;
-    t += `:boom: **BDC** : ${val('s_bdc')} → tombent tous les jours\n`;
-    t += `:dragon: **Hydre** : ${val('s_hy')}\n`;
-    t += `:smiling_imp: **Chimère** : ${val('s_ch')}\n\n`;
-    t += `:heavy_check_mark: **Exigences** :\n\n`;
-    t += `• **BDC UNM**\n`;
-    t += `• **${val('s_cvc')}** en CvC\n`;
-    t += `• Clash Hydre **${val('s_chy')}**\n`;
-    t += `• Discord\n`;
-    t += `place(s)=${getPlaceCompact(getValRaw('s_pl'))}\n\n⸻\n\n`;
+    parts.silver = anc('preview_silver') + `:crossed_swords: **UNION TEAM SILVER (Intermédiaire)**\n\n`
+        + `:boom: **BDC** : ${val('s_bdc')} → tombent tous les jours\n`
+        + `:dragon: **Hydre** : ${val('s_hy')}\n`
+        + `:smiling_imp: **Chimère** : ${val('s_ch')}\n\n`
+        + `:heavy_check_mark: **Exigences** :\n\n`
+        + `• **BDC UNM**\n`
+        + `• **${val('s_cvc')}** en CvC\n`
+        + `• Clash Hydre **${val('s_chy')}**\n`
+        + `• Discord\n`
+        + `place(s)=${getPlaceCompact(getValRaw('s_pl'))}`;
 
     // SAVAGE
-    t += anc('preview_savage') + `:fire:** UNION TEAM SAVAGE **\n\n`;
-    t += `:boom: **BDC** : ${val('sv_bdc')} → tombent tous les jours\n`;
-    t += `:dragon: **Hydre** : ${val('sv_hy')} → tout tombe\n`;
-    t += `:smiling_imp:** Chimère** : ${val('sv_ch')}\n\n`;
-    t += `:heavy_check_mark: **Exigences :**\n\n`;
-    t += `• Puissance mini : 2M\n`;
-    t += `• **BDC UNM & NM**\n`;
-    t += `• **${val('sv_cvc')}** en CvC\n`;
-    t += `• Clash Hydre **${val('sv_chy')}**\n`;
-    t += `• Clash Chimère **${val('sv_cch')}**\n`;
-    t += `• Discord\n`;
-    t += `place(s)=${getPlaceCompact(getValRaw('sv_pl'))}\n\n⸻\n\n`;
+    parts.savage = anc('preview_savage') + `:fire:** UNION TEAM SAVAGE **\n\n`
+        + `:boom: **BDC** : ${val('sv_bdc')} → tombent tous les jours\n`
+        + `:dragon: **Hydre** : ${val('sv_hy')} → tout tombe\n`
+        + `:smiling_imp:** Chimère** : ${val('sv_ch')}\n\n`
+        + `:heavy_check_mark: **Exigences :**\n\n`
+        + `• Puissance mini : 2M\n`
+        + `• **BDC UNM & NM**\n`
+        + `• **${val('sv_cvc')}** en CvC\n`
+        + `• Clash Hydre **${val('sv_chy')}**\n`
+        + `• Clash Chimère **${val('sv_cch')}**\n`
+        + `• Discord\n`
+        + `place(s)=${getPlaceCompact(getValRaw('sv_pl'))}`;
 
     // BRONZE
-    t += anc('preview_bronze') + `:third_place:** UNION TEAM BRONZE (Progression)**\n\n`;
-    t += `:boom: **BDC** : ${val('b_bdc')} → tombent chaque jour\n`;
-    t += `:punch: **Objectif** : faire tomber l'UNM ensemble !\n`;
-    t += `:dragon: **Hydre** : ${val('b_hy')}\n\n`;
-    t += `:heavy_check_mark: **Exigences :**\n\n`;
-    t += `• **BDC UNM**\n`;
-    t += `• **${val('b_cvc')}** en CvC\n`;
-    t += `• Monter vers **Silver**, puis **Gold**\n`;
-    t += `place(s)=${getPlaceCompact(getValRaw('b_pl'))}\n\n⸻\n\n`;
+    parts.bronze = anc('preview_bronze') + `:third_place:** UNION TEAM BRONZE (Progression)**\n\n`
+        + `:boom: **BDC** : ${val('b_bdc')} → tombent chaque jour\n`
+        + `:punch: **Objectif** : faire tomber l'UNM ensemble !\n`
+        + `:dragon: **Hydre** : ${val('b_hy')}\n\n`
+        + `:heavy_check_mark: **Exigences :**\n\n`
+        + `• **BDC UNM**\n`
+        + `• **${val('b_cvc')}** en CvC\n`
+        + bronzeMotivation(true) + `\n`
+        + `place(s)=${getPlaceCompact(getValRaw('b_pl'))}`;
+
+    const blocks = clansIn(CLAN_ORDER).map(k => parts[k]);
 
     // Pourquoi nous rejoindre - raccourci
-    t += `:gift: **Pourquoi nous rejoindre ?**\n\n`;
-    t += `:heavy_check_mark: Communauté soudée, mature, engagée\n`;
-    t += `:heavy_check_mark: Strats partagées, Discord actif\n`;
-    t += `:heavy_check_mark: Progression Bronze → Gold\n\n⸻\n\n`;
-    t += `:envelope_with_arrow:** Intéressé(e) ?** MP direct ou formulaire ci-dessous. On t'attend :muscle:`;
+    const why = [
+        `:gift: **Pourquoi nous rejoindre ?**\n`,
+        `:heavy_check_mark: Communauté soudée, mature, engagée`,
+        `:heavy_check_mark: Strats partagées, Discord actif`,
+        progressionLine(true)
+    ].filter(Boolean).join('\n');
+
+    let tail = why + SEP;
+    tail += `:envelope_with_arrow:** Intéressé(e) ?** MP direct ou formulaire ci-dessous. On t'attend :muscle:`;
+
+    let t = assemble(intro, blocks, tail, false);
 
     if (document.getElementById('includeForm') && document.getElementById('includeForm').checked) {
         t += `\n\n📝 Formulaire : ${FORM_LINK}`;
@@ -614,6 +871,7 @@ function switchPreviewMode(mode) {
 }
 
 function copyCompressed() {
+    if (!requireClans()) return;
     const text = constructCompressedText();
     navigator.clipboard.writeText(text);
     showToast("Version compressée copiée !");
@@ -632,6 +890,23 @@ function renderPreview(content) {
 }
 
 function build() {
+    // Le mode Manuel écrit du texte libre : les clans ne le pilotent pas.
+    // La vue compressée, elle, est toujours reconstruite depuis les champs.
+    const fieldBased = (previewMode === 'compressed') || (activeMode === 'auto');
+    if (fieldBased && clanCount() === 0) {
+        document.getElementById('visualPreview').innerHTML =
+            '<div class="preview-empty">Aucun clan n\'est inclus dans l\'annonce.<br>Réactive au moins un clan ci-contre pour générer le texte.</div>';
+        document.getElementById('counterLabel').innerHTML = 'Total Caractères : <span id="charCount">0</span> / 2000';
+        const status = document.getElementById('limitStatus');
+        status.innerHTML = "⚠️ Aucun clan";
+        status.className = 'limit-bad';
+        document.getElementById('menu-p1').style.display = 'none';
+        document.getElementById('menu-p2').style.display = 'none';
+        document.querySelector('.btn-trigger').style.background = '';
+        saveData();
+        return;
+    }
+
     let raw;
     if (previewMode === 'compressed') {
         raw = constructCompressedText(false);
@@ -709,6 +984,7 @@ function openLightbox(src) { const img = document.getElementById('lightboxImg');
 function scrollToNotes() { document.getElementById('notesModule').scrollIntoView({ behavior: 'smooth' }); }
 
 function copyAction(type) {
+    if (activeMode === 'auto' && !requireClans()) return;
     let text = (activeMode === 'manual') ? document.getElementById('manualEditor').value : constructV2Text(false);
     text = text.replace("%%%SPLIT%%%", "");
     if(type === 'friend') text = "```js\n" + text + "\n```";
@@ -717,6 +993,7 @@ function copyAction(type) {
 }
 
 function copySplit(part) {
+    if (activeMode === 'auto' && !requireClans()) return;
     let text = (activeMode === 'manual') ? document.getElementById('manualEditor').value : constructV2Text(false);
     const parts = text.split("%%%SPLIT%%%");
     let textToCopy = "";
@@ -742,24 +1019,30 @@ function saveData() {
     document.querySelectorAll('#autoContainer input[type="text"]').forEach(i => vals[i.id] = i.value);
     const switchState = document.getElementById('includeForm').checked;
     vals['includeForm'] = switchState;
-    localStorage.setItem('unionTeam_save', JSON.stringify(vals));
+    vals['activeClans'] = activeClans;
+    store.set('unionTeam_save', JSON.stringify(vals));
 }
-function saveNotes() { localStorage.setItem('unionTeam_richNotes', document.getElementById('userNotes').innerHTML); }
+function saveNotes() { store.set('unionTeam_richNotes', document.getElementById('userNotes').innerHTML); }
 
 function confirmReset() {
-    if(confirm("Réinitialiser tous les champs avec les valeurs par défaut ?")) {
+    if(confirm("Réinitialiser tous les champs avec les valeurs par défaut et remettre les 4 clans dans l'annonce ?")) {
         document.querySelectorAll('#autoContainer input[type="text"]').forEach(i => {
             i.value = i.getAttribute('data-default');
         });
-        build();
+        setAllClans(true);
     }
 }
 
 window.onload = () => {
-    const saved = localStorage.getItem('unionTeam_save');
+    const saved = store.get('unionTeam_save');
     if (saved) {
         const data = JSON.parse(saved);
-        for (const id in data) { 
+        if (data.activeClans) {
+            CLAN_ORDER.forEach(k => {
+                if (typeof data.activeClans[k] === 'boolean') activeClans[k] = data.activeClans[k];
+            });
+        }
+        for (const id in data) {
             const el = document.getElementById(id);
             if(el) {
                 if(el.type === 'checkbox') el.checked = data[id];
@@ -772,12 +1055,13 @@ window.onload = () => {
         });
     }
 
-    const savedNotes = localStorage.getItem('unionTeam_richNotes');
+    const savedNotes = store.get('unionTeam_richNotes');
     if(savedNotes) {
         document.getElementById('userNotes').innerHTML = savedNotes;
         document.querySelectorAll('#userNotes img').forEach(img => img.onclick = () => openLightbox(img.src));
     }
-    
+
+    applyClanUI();
     build();
 };
 
