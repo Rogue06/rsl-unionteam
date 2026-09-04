@@ -1025,11 +1025,26 @@ function saveData() {
 function saveNotes() { store.set('unionTeam_richNotes', document.getElementById('userNotes').innerHTML); }
 
 function confirmReset() {
-    if(confirm("Réinitialiser tous les champs avec les valeurs par défaut et remettre les 4 clans dans l'annonce ?")) {
-        document.querySelectorAll('#autoContainer input[type="text"]').forEach(i => {
-            i.value = i.getAttribute('data-default');
-        });
-        setAllClans(true);
+    const message = (activeMode === 'manual')
+        ? "Réinitialiser ? Le texte écrit en Mode Manuel sera remplacé par l'annonce complète des 4 clans."
+        : "Réinitialiser tous les champs avec les valeurs par défaut et remettre les 4 clans dans l'annonce ?";
+    if (!confirm(message)) return;
+
+    document.querySelectorAll('#autoContainer input[type="text"]').forEach(i => {
+        i.value = i.getAttribute('data-default');
+    });
+    CLAN_ORDER.forEach(k => activeClans[k] = true);
+    applyClanUI();
+
+    // Le Mode Manuel a son propre texte : sans ce cas, le reset remettait les
+    // champs à zéro mais laissait l'éditeur intact, et le bouton ne servait à
+    // rien pour quelqu'un qui venait d'effacer son annonce.
+    if (activeMode === 'manual') {
+        document.getElementById('manualEditor').value = constructV2Text(false);
+        renderFromManual();
+        saveData();
+    } else {
+        build();
     }
 }
 
