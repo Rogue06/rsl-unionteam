@@ -464,9 +464,8 @@
             <div class="banner-sub" id="bannerSub"></div>
             <div class="banner-actions" id="bannerActions">
                 <button class="banner-btn primary" id="bannerShort" onclick="copyShort()">Version courte (1 message)</button>
-                <span class="banner-or">ou couper en deux :</span>
-                <button class="banner-btn" onclick="copySplit(1)">Partie 1</button>
-                <button class="banner-btn" onclick="copySplit(2)">Partie 2</button>
+                <span class="banner-or" id="bannerOr"></span>
+                <span id="bannerSplit"></span>
             </div>
         </div>
         <div class="preview-notice" id="previewNotice" hidden></div>
@@ -655,6 +654,10 @@ function renderFromManual() {
     const raw = document.getElementById('manualEditor').value;
     renderPreview(raw);
     updateCounter(raw);
+    // Sans ça, le bandeau gardait le découpage du texte précédent : on
+    // collait deux messages et la fin de l'annonce disparaissait.
+    updateCopyBanner(raw);
+    updatePreviewNotice();
 }
 
 // --- GENERATION DU TEXTE ---
@@ -942,18 +945,33 @@ function updateCopyBanner(raw) {
     const banner = document.getElementById('copyBanner');
     const trop = raw.replace("%%%SPLIT%%%", "").length > 2000;
     banner.hidden = !trop;
-    if (!trop) return;
+    if (!trop) {
+        // On vide les boutons du texte précédent : masqués, ils resteraient
+        // sinon en mémoire avec un découpage qui ne correspond plus à rien.
+        document.getElementById('bannerSplit').innerHTML = '';
+        return;
+    }
 
     const len = raw.replace("%%%SPLIT%%%", "").length;
     const dejaCourte = (previewMode === 'compressed');
+    const parts = decouperPourDiscord(raw);
+    const n = parts.length;
+
     document.getElementById('bannerMsg').innerText =
         `⚠️ ${len} caractères : trop long pour un seul message Discord.`;
     document.getElementById('bannerSub').innerText = dejaCourte
-        ? "Même raccourcie, l'annonce dépasse la limite. Coupe-la en deux messages, ou retire un clan."
+        ? `Même raccourcie, l'annonce dépasse la limite. Colle-la en ${n} messages, ou retire un clan.`
         : "La limite est de 2000 caractères sans abonnement Nitro. Deux solutions :";
+
     // Proposer la version courte n'a de sens que si on ne la regarde pas déjà
     document.getElementById('bannerShort').hidden = dejaCourte;
-    document.querySelector('.banner-or').innerText = dejaCourte ? "couper en deux :" : "ou couper en deux :";
+    document.getElementById('bannerOr').innerText =
+        (dejaCourte ? "à coller en " : "ou couper en ") + n + " messages :";
+
+    // Le nombre de parties dépend du texte : on ne peut pas figer deux boutons.
+    document.getElementById('bannerSplit').innerHTML = parts
+        .map((p, i) => `<button class="banner-btn" onclick="copySplit(${i + 1})">Partie ${i + 1}</button>`)
+        .join(' ');
 }
 
 // L'aperçu compressé est toujours reconstruit depuis les champs : en Mode
@@ -1097,20 +1115,47 @@ function copyShort() {
     showToast("Version courte copiée !");
 }
 
+// Découpe garantie : aucune partie ne doit dépasser la limite, sinon Discord
+// refuse le collage et la personne se retrouve coincée. Couper en deux ne
+// suffit pas toujours — un texte libre de 4000 caractères donnait deux
+// moitiés de 2100, refusées toutes les deux.
+function decouperPourDiscord(texte, limite = 2000) {
+    const parts = [];
+    texte.split("%%%SPLIT%%%").forEach(segment => {
+        if (segment.length <= limite) { parts.push(segment); return; }
+        decouperSegment(segment, limite).forEach(p => parts.push(p));
+    });
+    return parts;
+}
+
+// On coupe au séparateur de section, sinon au paragraphe, sinon à la ligne,
+// sinon entre deux mots : mieux vaut une coupure lisible qu'au milieu d'un mot.
+function decouperSegment(texte, limite) {
+    const separateurs = ['\n\n⸻\n\n', '\n\n', '\n', ' '];
+    const parts = [];
+    let reste = texte;
+    while (reste.length > limite) {
+        let coupe = -1;
+        for (const sep of separateurs) {
+            const idx = reste.lastIndexOf(sep, limite - sep.length);
+            if (idx > 0) { coupe = idx + sep.length; break; }
+        }
+        if (coupe <= 0) coupe = limite; // un pavé sans espace : on tranche net
+        parts.push(reste.slice(0, coupe).trim());
+        reste = reste.slice(coupe).trim();
+    }
+    if (reste.length) parts.push(reste);
+    return parts;
+}
+
 function copySplit(part) {
     const issuDesChamps = (previewMode === 'compressed') || (activeMode === 'auto');
     if (issuDesChamps && !requireClans()) return;
-    let text = currentText();
-    const parts = text.split("%%%SPLIT%%%");
-    let textToCopy = "";
-    if(parts.length > 1) {
-         textToCopy = (part === 1) ? parts[0] : parts[1];
-    } else {
-        const mid = Math.floor(text.length / 2);
-        textToCopy = (part === 1) ? text.substring(0, mid) : text.substring(mid);
-    }
-    navigator.clipboard.writeText(textToCopy);
-    showToast(`Partie ${part} copiée !`);
+    const parts = decouperPourDiscord(currentText());
+    const morceau = parts[part - 1];
+    if (!morceau) { showToast("Cette partie n'existe plus"); return; }
+    navigator.clipboard.writeText(morceau);
+    showToast(`Partie ${part} sur ${parts.length} copiée !`);
 }
 
 function copyFormLink() {
