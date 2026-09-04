@@ -281,8 +281,25 @@
         .affiche-aide { margin: 8px 0 12px 0; font-size: 12px; color: var(--text-muted); line-height: 1.5; }
         .affiche-ctrl { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
         .affiche-ctrl select { background: #111214; border: 1px solid #1a1b1e; border-radius: 4px; color: #dbdee1; font-size: 11px; padding: 5px 6px; outline: none; }
-        .affiche-joindre { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: #dbdee1; cursor: pointer; }
-        .affiche-joindre input { width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; }
+        /* La règle globale des <label> force les majuscules : illisible dès
+           qu'il s'agit d'une phrase et non d'un intitulé de champ. */
+        .affiche-joindre, .affiche-radio { text-transform: none; }
+        .affiche-joindre { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #dbdee1; cursor: pointer; }
+        .affiche-joindre input { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
+
+        /* Les réglages restent repliés : une seule case à comprendre au départ */
+        .affiche-avance { margin-top: 12px; }
+        .affiche-avance > summary {
+            cursor: pointer; font-size: 11px; font-weight: 700; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 0.5px; padding: 6px 0; list-style: revert;
+        }
+        .affiche-avance > summary:hover { color: white; }
+        .affiche-radio {
+            display: flex; align-items: flex-start; gap: 8px; padding: 8px 0;
+            font-size: 12px; color: #dbdee1; line-height: 1.45; cursor: pointer;
+        }
+        .affiche-radio input { margin-top: 2px; accent-color: var(--accent); cursor: pointer; }
+        .affiche-sous-bloc { margin-top: 8px; padding: 10px; background: #111214; border-radius: 6px; }
         /* L'étape 2 change de couleur : on voit d'un coup d'œil où on en est */
         .serv-go.etape2 { background: var(--success); }
         .serv-go.etape2:hover { background: #1f6b3a; }
@@ -714,50 +731,50 @@
 
         <div class="affiche-bloc">
             <div class="affiche-titre">🖼️ Affiche</div>
-            <p class="affiche-aide">
-                Pour joindre l'affiche : colle-la d'abord dans Discord (Ctrl+V), colle l'annonce
-                juste après, puis Entrée. <b>Les deux partent dans le même message.</b>
-            </p>
-            <div class="affiche-ctrl" style="margin-bottom:12px">
-                <span class="serv-lab">joindre l'affiche</span>
-                <select id="modeAffiche" onchange="changerModeAffiche(this.value)">
-                    <option value="aucun">Non, texte seul</option>
-                    <option value="lien">En lien — 1 seul collage</option>
-                    <option value="fichier">En pièce jointe — 2 collages</option>
-                </select>
-            </div>
+            <p class="affiche-aide" id="afficheAide"></p>
+            <label class="affiche-joindre">
+                <input type="checkbox" id="afficheActive" checked onchange="changerAfficheActive(this.checked)">
+                <span>Joindre l'affiche à l'annonce</span>
+            </label>
 
-            <div id="blocLien" hidden>
-                <p class="affiche-aide">
-                    L'adresse de l'affiche est ajoutée à la fin de l'annonce et Discord affiche
-                    l'image dessous. <b>Un seul « Copier + ouvrir » suffit.</b> Revers : l'adresse
-                    reste écrite dans le message, visible par tous.
-                </p>
-                <input type="text" id="afficheLien" onchange="changerAfficheLien(this.value)"
-                       placeholder="Adresse de l'affiche" style="width:100%;box-sizing:border-box;font-size:11px">
-                <p class="affiche-aide" style="margin-top:6px">
-                    Pour ne pas montrer ton dépôt, héberge l'affiche ailleurs et colle l'adresse ici.
-                </p>
-            </div>
+            <details id="afficheAvance" class="affiche-avance">
+                <summary>Réglages de l'affiche</summary>
 
-            <div id="blocFichier" hidden>
-                <p class="affiche-aide">
-                    L'image part en pièce jointe, <b>aucune adresse dans le message</b>. Le bouton
-                    de chaque serveur devient « 1 · Affiche + ouvrir » puis « 2 · Copier l'annonce ».
-                </p>
-                <div class="affiche-ctrl">
-                    <button class="serv-go" onclick="copierAffiche()">Copier l'affiche seule</button>
-                    <span class="serv-delai">
-                        <span class="serv-lab">taille</span>
-                        <select id="afficheTaille" onchange="changerTailleAffiche(this.value)">
-                            <option value="400">Petite</option>
-                            <option value="600" selected>Moyenne</option>
-                            <option value="900">Grande</option>
-                            <option value="1200">Maximale</option>
-                        </select>
-                    </span>
+                <label class="affiche-radio">
+                    <input type="radio" name="methodeAffiche" value="lien" checked
+                           onchange="changerMethodeAffiche('lien')">
+                    <span><b>Un seul message</b> — l'image s'affiche sous le texte, et son adresse
+                    reste écrite dans le message.</span>
+                </label>
+                <label class="affiche-radio">
+                    <input type="radio" name="methodeAffiche" value="fichier"
+                           onchange="changerMethodeAffiche('fichier')">
+                    <span><b>L'affiche d'abord</b> — deux messages : l'image, puis l'annonce.
+                    Aucune adresse écrite.</span>
+                </label>
+
+                <div id="blocLien" hidden class="affiche-sous-bloc">
+                    <span class="serv-lab">adresse de l'affiche</span>
+                    <input type="text" id="afficheLien" onchange="changerAfficheLien(this.value)"
+                           style="width:100%;box-sizing:border-box;font-size:11px;margin:6px 0">
+                    <button class="serv-mini" onclick="retablirAfficheLien()">↺ Rétablir l'adresse d'origine</button>
                 </div>
-            </div>
+
+                <div id="blocFichier" hidden class="affiche-sous-bloc">
+                    <div class="affiche-ctrl">
+                        <button class="serv-go" onclick="copierAffiche()">Copier l'affiche seule</button>
+                        <span class="serv-delai">
+                            <span class="serv-lab">taille</span>
+                            <select id="afficheTaille" onchange="changerTailleAffiche(this.value)">
+                                <option value="400">Petite</option>
+                                <option value="600" selected>Moyenne</option>
+                                <option value="900">Grande</option>
+                                <option value="1200">Maximale</option>
+                            </select>
+                        </span>
+                    </div>
+                </div>
+            </details>
         </div>
         <div id="serveursListe"></div>
         <div class="serv-add">
@@ -1562,24 +1579,59 @@ const AFFICHE_URL = 'affiche.webp';
 // https://rogue06.github.io/rsl-unionteam/affiche.webp
 const AFFICHE_LIEN_DEFAUT = 'https://i.postimg.cc/x87Stc0s/Union-Team-logo.webp';
 let afficheLien = AFFICHE_LIEN_DEFAUT;
-// 'aucun' | 'lien' (une seule copie, adresse visible) | 'fichier' (deux collages, rien d'écrit)
-let modeAffiche = 'aucun';
+// L'affiche est jointe par défaut : c'est le cas courant, autant éviter un
+// réglage à comprendre. La méthode se règle dans les options repliées.
+let afficheActive = true;
+let methodeAffiche = 'lien';
+// Valeur dérivée utilisée par la génération du texte :
+// 'aucun' | 'lien' (une seule copie, adresse visible) | 'fichier' (image d'abord, 2 messages)
+let modeAffiche = 'lien';
 let affichePng = null;
 let afficheTaille = 600;
 
-function changerModeAffiche(mode) {
-    modeAffiche = mode;
-    store.set('unionTeam_modeAffiche', mode);
+function appliquerModeAffiche() {
+    modeAffiche = afficheActive ? methodeAffiche : 'aucun';
+    store.set('unionTeam_afficheActive', afficheActive ? '1' : '0');
+    store.set('unionTeam_methodeAffiche', methodeAffiche);
     Object.keys(etapeServeur).forEach(k => delete etapeServeur[k]);
-    document.getElementById('blocFichier').hidden = (mode !== 'fichier');
-    document.getElementById('blocLien').hidden = (mode !== 'lien');
+    const avance = document.getElementById('afficheAvance');
+    if (avance) avance.hidden = !afficheActive;
+    const blocLien = document.getElementById('blocLien');
+    const blocFichier = document.getElementById('blocFichier');
+    if (blocLien) blocLien.hidden = (modeAffiche !== 'lien');
+    if (blocFichier) blocFichier.hidden = (modeAffiche !== 'fichier');
+
+    // La marche à suivre change selon la méthode : autant l'écrire au bon moment
+    const aide = document.getElementById('afficheAide');
+    if (aide) {
+        aide.innerHTML = modeAffiche === 'fichier'
+            ? "Le bouton de chaque serveur se fait en deux temps : <b>1 · Affiche</b> — colle, Entrée, "
+              + "l'image part seule. Puis <b>2 · Annonce</b> — colle, Entrée."
+            : (modeAffiche === 'lien'
+                ? "Un seul <b>Copier + ouvrir</b> par serveur : tu colles, Entrée, et l'image "
+                  + "s'affiche sous l'annonce."
+                : "L'annonce part sans affiche.");
+    }
     renderServeurs();
     build();
 }
 
+function changerAfficheActive(actif) { afficheActive = !!actif; appliquerModeAffiche(); }
+function changerMethodeAffiche(m) { methodeAffiche = m; appliquerModeAffiche(); }
+
 function changerAfficheLien(url) {
     afficheLien = url.trim() || AFFICHE_LIEN_DEFAUT;
     store.set('unionTeam_afficheLien', afficheLien);
+    build();
+}
+
+// Une adresse effacée par mégarde rendait l'affiche introuvable sans moyen
+// simple de revenir en arrière.
+function retablirAfficheLien() {
+    afficheLien = AFFICHE_LIEN_DEFAUT;
+    store.set('unionTeam_afficheLien', afficheLien);
+    document.getElementById('afficheLien').value = afficheLien;
+    showToast("Adresse d'origine rétablie");
     build();
 }
 
@@ -1987,14 +2039,15 @@ window.onload = () => {
     afficheLien = store.get('unionTeam_afficheLien') || AFFICHE_LIEN_DEFAUT;
     const champLien = document.getElementById('afficheLien');
     if (champLien) champLien.value = afficheLien;
-    const modeSauve = store.get('unionTeam_modeAffiche');
-    if (modeSauve) {
-        modeAffiche = modeSauve;
-        const sel = document.getElementById('modeAffiche');
-        if (sel) sel.value = modeAffiche;
-        document.getElementById('blocFichier').hidden = (modeAffiche !== 'fichier');
-        document.getElementById('blocLien').hidden = (modeAffiche !== 'lien');
-    }
+    const actifSauve = store.get('unionTeam_afficheActive');
+    if (actifSauve !== null) afficheActive = (actifSauve === '1');
+    const methodeSauvee = store.get('unionTeam_methodeAffiche');
+    if (methodeSauvee === 'lien' || methodeSauvee === 'fichier') methodeAffiche = methodeSauvee;
+    const caseAffiche = document.getElementById('afficheActive');
+    if (caseAffiche) caseAffiche.checked = afficheActive;
+    const radio = document.querySelector(`input[name="methodeAffiche"][value="${methodeAffiche}"]`);
+    if (radio) radio.checked = true;
+    appliquerModeAffiche();
     const tailleSauvee = store.get('unionTeam_afficheTaille');
     if (tailleSauvee) {
         afficheTaille = parseInt(tailleSauvee, 10) || 600;
