@@ -140,6 +140,25 @@
         .clan-chip.on[data-clan="savage"] { color: #5b74e8; }
         .clan-chip.on[data-clan="bronze"] { color: #c87f3a; }
 
+        /* IDENTITE COULEUR PAR CLAN
+           --clan sert au liseré et au fond teinté, --clan-text au titre :
+           le fond des cartes est plus clair que celui des pastilles, donc la
+           teinte du liseré n'y passe pas le seuil de lisibilité en texte. */
+        #card_gold   { --clan: #f0b232; --clan-soft: rgba(240, 178, 50, 0.05);  --clan-text: #f0b232; }
+        #card_silver { --clan: #a9b0b8; --clan-soft: rgba(196, 201, 206, 0.05); --clan-text: #c4c9ce; }
+        #card_savage { --clan: #5b74e8; --clan-soft: rgba(91, 116, 232, 0.07);  --clan-text: #8093ee; }
+        #card_bronze { --clan: #c87f3a; --clan-soft: rgba(200, 127, 58, 0.06);  --clan-text: #d18f4e; }
+
+        .module-card[id^="card_"] {
+            /* Liseré en ombre interne plutôt qu'en bordure : pas de décalage
+               de mise en page, et le halo de focus reste visible par-dessus. */
+            box-shadow: inset 3px 0 0 var(--clan);
+            background: linear-gradient(90deg, var(--clan-soft), rgba(0,0,0,0) 55%), #2b2d31;
+            padding-left: 23px;
+        }
+        .module-card[id^="card_"] h3 { color: var(--clan-text); }
+        .module-card[id^="card_"].off h3 { color: var(--text-muted); }
+
         /* CARTE CLAN : en-tete + etat retire */
         .card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 15px; }
         .card-head-right { display: flex; align-items: center; gap: 10px; }
