@@ -701,6 +701,18 @@
         </div>
 
         <div class="affiche-bloc">
+            <div class="affiche-titre">⚙️ Ouverture</div>
+            <p class="affiche-aide">
+                Par défaut les liens ouvrent Discord dans le navigateur. Coche ceci si tu utilises
+                <b>l'application Discord</b> installée sur ton ordinateur.
+            </p>
+            <label class="affiche-joindre">
+                <input type="checkbox" id="ouvrirAppli" onchange="changerOuvertureAppli(this.checked)">
+                <span>Ouvrir dans l'application Discord</span>
+            </label>
+        </div>
+
+        <div class="affiche-bloc">
             <div class="affiche-titre">🖼️ Affiche</div>
             <p class="affiche-aide">
                 Pour joindre l'affiche : colle-la d'abord dans Discord (Ctrl+V), colle l'annonce
@@ -1547,7 +1559,7 @@ async function etapeAffiche(id) {
     const s = serveurs.find(x => x.id === id);
     if (!s || !requireClans()) return;
     await copierAffiche();
-    window.open(s.url, '_blank');
+    window.open(lienOuverture(s.url), '_blank');
     etapeServeur[id] = 2;
     renderServeurs();
 }
@@ -1626,6 +1638,22 @@ function chargerServeurs() {
 }
 
 function sauverServeurs() { store.set('unionTeam_serveurs', JSON.stringify(serveurs)); }
+
+// Un lien https ouvre Discord dans le navigateur. Pour ceux qui travaillent
+// dans l'application, discord:// la vise directement — mais si elle n'est pas
+// installée, le navigateur ne fait rien, d'où le réglage plutôt qu'un choix
+// imposé.
+let ouvrirDansAppli = false;
+
+function changerOuvertureAppli(actif) {
+    ouvrirDansAppli = !!actif;
+    store.set('unionTeam_ouvrirAppli', ouvrirDansAppli ? '1' : '0');
+}
+
+function lienOuverture(url) {
+    if (!ouvrirDansAppli) return url;
+    return url.replace(/^https:\/\/(discord\.com|discordapp\.com)\//, 'discord://-/');
+}
 
 let tourneeTimer = null;
 
@@ -1753,7 +1781,7 @@ function publierVers(id) {
     s.dernierPost = Date.now();
     sauverServeurs();
     renderServeurs();
-    window.open(s.url, '_blank');
+    window.open(lienOuverture(s.url), '_blank');
     showToast(parts.length > 1
         ? `Partie 1 sur ${parts.length} copiée — colle, puis reviens ici`
         : 'Annonce copiée — colle dans le salon');
@@ -1897,6 +1925,9 @@ window.onload = () => {
     }
 
     chargerServeurs();
+    ouvrirDansAppli = store.get('unionTeam_ouvrirAppli') === '1';
+    const caseAppli = document.getElementById('ouvrirAppli');
+    if (caseAppli) caseAppli.checked = ouvrirDansAppli;
     afficheJointe = store.get('unionTeam_afficheJointe') === '1';
     const caseJointe = document.getElementById('afficheJointe');
     if (caseJointe) caseJointe.checked = afficheJointe;
