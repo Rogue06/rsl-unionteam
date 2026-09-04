@@ -281,6 +281,11 @@
         .affiche-aide { margin: 8px 0 12px 0; font-size: 12px; color: var(--text-muted); line-height: 1.5; }
         .affiche-ctrl { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
         .affiche-ctrl select { background: #111214; border: 1px solid #1a1b1e; border-radius: 4px; color: #dbdee1; font-size: 11px; padding: 5px 6px; outline: none; }
+        .affiche-joindre { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: #dbdee1; cursor: pointer; }
+        .affiche-joindre input { width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; }
+        /* L'étape 2 change de couleur : on voit d'un coup d'œil où on en est */
+        .serv-go.etape2 { background: var(--success); }
+        .serv-go.etape2:hover { background: #1f6b3a; }
 
         .serv-row { background: #2b2d31; border: 1px solid #3f4147; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; }
         .serv-row.pret { border-left: 3px solid var(--success); }
@@ -701,8 +706,14 @@
                 Pour joindre l'affiche : colle-la d'abord dans Discord (Ctrl+V), colle l'annonce
                 juste après, puis Entrée. <b>Les deux partent dans le même message.</b>
             </p>
+            <div class="affiche-ctrl" style="margin-bottom:10px">
+                <label class="affiche-joindre">
+                    <input type="checkbox" id="afficheJointe" onchange="changerAfficheJointe(this.checked)">
+                    <span>Joindre l'affiche à chaque publication</span>
+                </label>
+            </div>
             <div class="affiche-ctrl">
-                <button class="serv-go" onclick="copierAffiche()">Copier l'affiche</button>
+                <button class="serv-go" onclick="copierAffiche()">Copier l'affiche seule</button>
                 <span class="serv-delai">
                     <span class="serv-lab">taille</span>
                     <select id="afficheTaille" onchange="changerTailleAffiche(this.value)">
@@ -1519,6 +1530,42 @@ async function preparerAffiche() {
     return affichePng;
 }
 
+// Le presse-papier ne tient qu'une chose à la fois : impossible d'y mettre
+// l'image ET le texte. À défaut d'un bouton unique, le bouton se souvient de
+// l'étape, pour n'avoir jamais à se demander ce qu'on vient de copier.
+let afficheJointe = false;
+const etapeServeur = {};
+
+function changerAfficheJointe(actif) {
+    afficheJointe = !!actif;
+    store.set('unionTeam_afficheJointe', afficheJointe ? '1' : '0');
+    Object.keys(etapeServeur).forEach(k => delete etapeServeur[k]);
+    renderServeurs();
+}
+
+async function etapeAffiche(id) {
+    const s = serveurs.find(x => x.id === id);
+    if (!s || !requireClans()) return;
+    await copierAffiche();
+    window.open(s.url, '_blank');
+    etapeServeur[id] = 2;
+    renderServeurs();
+}
+
+function etapeAnnonce(id) {
+    const s = serveurs.find(x => x.id === id);
+    if (!s) return;
+    const parts = decouperPourDiscord(texteServeur(s));
+    navigator.clipboard.writeText(parts[0]);
+    s.dernierPost = Date.now();
+    delete etapeServeur[id];
+    sauverServeurs();
+    renderServeurs();
+    showToast(parts.length > 1
+        ? `Annonce copiée (1 sur ${parts.length}) — colle, puis Entrée`
+        : 'Annonce copiée — colle sous l\'affiche, puis Entrée');
+}
+
 function changerTailleAffiche(px) {
     afficheTaille = parseInt(px, 10) || 600;
     affichePng = null; // la taille a changé : l'image en cache ne vaut plus
@@ -1675,7 +1722,11 @@ function renderServeurs() {
                 <span class="serv-etat ${reste ? 'wait' : 'ok'}" id="etat_${s.id}">${attenteTexte(s)}</span>
             </div>
             <div class="serv-ctrl">
-                <button class="serv-go" onclick="publierVers('${s.id}')">Copier + ouvrir</button>
+                ${!afficheJointe
+                    ? `<button class="serv-go" onclick="publierVers('${s.id}')">Copier + ouvrir</button>`
+                    : (etapeServeur[s.id] === 2
+                        ? `<button class="serv-go etape2" onclick="etapeAnnonce('${s.id}')">2 · Copier l'annonce</button>`
+                        : `<button class="serv-go" onclick="etapeAffiche('${s.id}')">1 · Affiche + ouvrir</button>`)}
                 ${suite}
                 <select onchange="changerVersion('${s.id}', this.value)" title="Version à publier">
                     <option value="courte" ${s.version === 'courte' ? 'selected' : ''}>Courte</option>
@@ -1846,6 +1897,9 @@ window.onload = () => {
     }
 
     chargerServeurs();
+    afficheJointe = store.get('unionTeam_afficheJointe') === '1';
+    const caseJointe = document.getElementById('afficheJointe');
+    if (caseJointe) caseJointe.checked = afficheJointe;
     const tailleSauvee = store.get('unionTeam_afficheTaille');
     if (tailleSauvee) {
         afficheTaille = parseInt(tailleSauvee, 10) || 600;
