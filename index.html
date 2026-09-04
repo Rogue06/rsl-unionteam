@@ -300,6 +300,9 @@
             font-size: 11px; padding: 5px 6px; outline: none;
         }
         .serv-ctrl input[type="number"] { width: 52px; }
+        .serv-lab { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
+        /* Le libellé, le champ et l'unité restent solidaires quand la ligne se replie */
+        .serv-delai { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
         .serv-go {
             flex: 1; min-width: 140px; background: var(--accent); color: white; border: none;
             border-radius: 6px; padding: 8px 10px; font-size: 12px; font-weight: 700; cursor: pointer;
@@ -1491,10 +1494,39 @@ function chargerServeurs() {
 
 function sauverServeurs() { store.set('unionTeam_serveurs', JSON.stringify(serveurs)); }
 
+let tourneeTimer = null;
+
 function toggleTournee() {
     const ouvert = document.getElementById('tourneePanel').classList.toggle('active');
     document.getElementById('tourneeOverlay').classList.toggle('active');
-    if (ouvert) renderServeurs();
+    if (ouvert) {
+        renderServeurs();
+        // Le décompte avance pendant qu'on publie : sans ça, un serveur reste
+        // affiché "dans 2 min" alors qu'il est redevenu disponible.
+        tourneeTimer = setInterval(majDecomptes, 20000);
+    } else {
+        clearInterval(tourneeTimer);
+        tourneeTimer = null;
+    }
+}
+
+// On ne redessine que les compteurs : un rendu complet ferait perdre le focus
+// d'un champ en cours de saisie.
+function majDecomptes() {
+    serveurs.forEach(s => {
+        const etat = document.getElementById('etat_' + s.id);
+        const meta = document.getElementById('meta_' + s.id);
+        const row = document.getElementById('row_' + s.id);
+        if (!etat || !row) return;
+        const reste = attenteRestante(s);
+        etat.innerText = attenteTexte(s);
+        etat.className = 'serv-etat ' + (reste ? 'wait' : 'ok');
+        row.className = 'serv-row ' + (reste ? 'attente' : 'pret');
+        if (meta) {
+            const parts = decouperPourDiscord(texteServeur(s));
+            meta.innerText = `${depuis(s.dernierPost)} · ${parts.length > 1 ? parts.length + ' messages' : '1 message'}`;
+        }
+    });
 }
 
 // "il y a 3 h", "il y a 5 j" : plus lisible qu'une date quand ce qui compte
@@ -1508,10 +1540,22 @@ function depuis(ts) {
     return `publié il y a ${j} j`;
 }
 
-function heuresRestantes(s) {
+// Millisecondes avant la prochaine publication autorisée, 0 si c'est bon.
+function attenteRestante(s) {
     if (!s.dernierPost) return 0;
     const restant = (s.dernierPost + s.cooldown * 3600000) - Date.now();
-    return restant > 0 ? Math.ceil(restant / 3600000) : 0;
+    return restant > 0 ? restant : 0;
+}
+
+// "dans 18 h 05", "dans 42 min" : à l'heure entière près, un cooldown qui
+// expire dans cinq minutes s'afficherait "dans 1 h" et ferait attendre pour rien.
+function attenteTexte(s) {
+    const ms = attenteRestante(s);
+    if (!ms) return 'prêt';
+    const min = Math.ceil(ms / 60000);
+    if (min < 60) return `dans ${min} min`;
+    const h = Math.floor(min / 60), reste = min % 60;
+    return reste ? `dans ${h} h ${String(reste).padStart(2, '0')}` : `dans ${h} h`;
 }
 
 function texteServeur(s) {
@@ -1528,21 +1572,21 @@ function renderServeurs() {
     }
 
     zone.innerHTML = serveurs.map(s => {
-        const reste = heuresRestantes(s);
+        const reste = attenteRestante(s);
         const parts = decouperPourDiscord(texteServeur(s));
         const suite = parts.length > 1
             ? parts.slice(1).map((p, i) => `<button class="serv-part" onclick="copierPartie('${s.id}', ${i + 2})">Partie ${i + 2}</button>`).join('')
             : '';
-        return `<div class="serv-row ${reste ? 'attente' : 'pret'}">
+        return `<div class="serv-row ${reste ? 'attente' : 'pret'}" id="row_${s.id}">
             <div class="serv-head">
                 <div>
                     <div class="serv-nom">${s.nom}</div>
-                    <div class="serv-meta">${depuis(s.dernierPost)} · ${parts.length > 1 ? parts.length + ' messages' : '1 message'}</div>
+                    <div class="serv-meta" id="meta_${s.id}">${depuis(s.dernierPost)} · ${parts.length > 1 ? parts.length + ' messages' : '1 message'}</div>
                     ${s.invitation
                         ? `<a class="serv-invit" href="${s.invitation}" target="_blank" rel="noopener">Pas encore membre ? Rejoindre ce Discord</a>`
                         : `<button class="serv-invit vide" onclick="definirInvitation('${s.id}')">+ ajouter le lien d'invitation</button>`}
                 </div>
-                <span class="serv-etat ${reste ? 'wait' : 'ok'}">${reste ? 'dans ' + reste + ' h' : 'prêt'}</span>
+                <span class="serv-etat ${reste ? 'wait' : 'ok'}" id="etat_${s.id}">${attenteTexte(s)}</span>
             </div>
             <div class="serv-ctrl">
                 <button class="serv-go" onclick="publierVers('${s.id}')">Copier + ouvrir</button>
@@ -1551,8 +1595,12 @@ function renderServeurs() {
                     <option value="courte" ${s.version === 'courte' ? 'selected' : ''}>Courte</option>
                     <option value="complete" ${s.version === 'complete' ? 'selected' : ''}>Complète</option>
                 </select>
-                <input type="number" min="0" max="720" value="${s.cooldown}" title="Délai entre deux publications, en heures"
-                       onchange="changerCooldown('${s.id}', this.value)">
+                <span class="serv-delai">
+                    <span class="serv-lab">attendre</span>
+                    <input type="number" min="0" max="720" value="${s.cooldown}" title="Délai imposé par ce serveur entre deux annonces"
+                           onchange="changerCooldown('${s.id}', this.value)">
+                    <span class="serv-lab">h</span>
+                </span>
                 <button class="serv-mini" onclick="oublierPost('${s.id}')" title="Je n'ai finalement pas publié">↺</button>
                 <button class="serv-mini danger" onclick="supprimerServeur('${s.id}')" title="Retirer de la tournée">✕</button>
             </div>
